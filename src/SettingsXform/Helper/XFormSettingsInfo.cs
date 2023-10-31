@@ -7,7 +7,7 @@
      * 
      * Modifed by Andreas Reitberger to work on .NET MAUI
      */
-    internal class MauiSettingsInfo
+    internal class XFormSettingsInfo
     {
         #region Properties
         public string Name { get; set; }

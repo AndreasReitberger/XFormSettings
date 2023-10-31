@@ -12,7 +12,7 @@ namespace AndreasReitberger.XForm.Helper
      * Modifed by Andreas Reitberger to work on .NET MAUI
      */
 
-    internal class MauiSettingsObjectHelper
+    internal class XFormSettingsObjectHelper
     {
         public static object GetSettingValue(MemberInfo mi, object o)
         {
@@ -89,7 +89,7 @@ namespace AndreasReitberger.XForm.Helper
             }
             return null;
         }
-        public static object GetDefaultValue(MauiSettingBaseAttribute attr, Type settingType)
+        public static object GetDefaultValue(XFormSettingBaseAttribute attr, Type settingType)
         {
             try
             {

@@ -7,27 +7,12 @@
      * 
      * Modifed by Andreas Reitberger to work on .NET MAUI
      */
+
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
-    public class MauiSettingBaseAttribute : Attribute
+    public class XFormSettingAttribute : XFormSettingBaseAttribute
     {
         #region Properties
-        public string Name { get; set; }
-
-        private object _default;
-        public object DefaultValue
-        {
-            get
-            {
-                return _default;
-            }
-            set
-            {
-                _default = value;
-                DefaultValueInUse = true;
-            }
-        }
-
-        internal bool DefaultValueInUse;
+        public bool Secure { get; set; } = false;
         #endregion
     }
 }

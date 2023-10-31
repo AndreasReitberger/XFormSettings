@@ -1,6 +1,6 @@
 ﻿namespace AndreasReitberger.XForm.Enums
 {
-    public enum MauiSettingsTarget
+    public enum XFormSettingsTarget
     {
         Local,
 #if IOS

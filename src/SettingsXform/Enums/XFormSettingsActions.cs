@@ -7,7 +7,7 @@
      * 
      * Modifed by Andreas Reitberger to work on .NET MAUI
      */
-    public enum MauiSettingsActions
+    public enum XFormSettingsActions
     {
         Load,
         Save,

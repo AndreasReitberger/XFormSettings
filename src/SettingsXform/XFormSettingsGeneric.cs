@@ -24,7 +24,7 @@ namespace AndreasReitberger.XForm
      * Modifed by Andreas Reitberger to work on .NET MAUI
      */
 
-    public partial class MauiSettingsGeneric<SO> where SO : new()
+    public partial class XFormSettingsGeneric<SO> where SO : new()
     {
         #region Settings Object
 
@@ -47,8 +47,8 @@ namespace AndreasReitberger.XForm
         #endregion
 
         #region Constructor
-        public MauiSettingsGeneric() { }
-        public MauiSettingsGeneric(SO settingsObject)
+        public XFormSettingsGeneric() { }
+        public XFormSettingsGeneric(SO settingsObject)
         {
             _settingsObject = settingsObject;
         }
@@ -78,18 +78,18 @@ namespace AndreasReitberger.XForm
         }
         public static void LoadObjectSetting<T>(object settingsObject, Expression<Func<SO, T>> value)
         {
-            GetExpressionMeta(settings: settingsObject, value, MauiSettingsActions.Load);
+            GetExpressionMeta(settings: settingsObject, value, XFormSettingsActions.Load);
         }
         public static async Task LoadObjectSettingAsync<T>(object settingsObject, Expression<Func<SO, T>> value)
         {
             await Task.Run(async delegate
             {
-                await GetExpressionMetaAsync(settings: settingsObject, value, MauiSettingsActions.Load);
+                await GetExpressionMetaAsync(settings: settingsObject, value, XFormSettingsActions.Load);
             });
         }
         public static void LoadSettings(object settings)
         {
-            GetClassMeta(settings: settings, mode: MauiSettingsActions.Load);
+            GetClassMeta(settings: settings, mode: XFormSettingsActions.Load);
         }
         public static async Task LoadSettingsAsync()
         {
@@ -102,7 +102,7 @@ namespace AndreasReitberger.XForm
         {
             await Task.Run(async delegate
             {
-                await GetClassMetaAsync(settings: settings, mode: MauiSettingsActions.Load);
+                await GetClassMetaAsync(settings: settings, mode: XFormSettingsActions.Load);
             });
         }
         public static async Task LoadSecureSettingsAsync()
@@ -116,7 +116,7 @@ namespace AndreasReitberger.XForm
         {
             await Task.Run(async delegate
             {
-                await GetClassMetaAsync(settings: settings, mode: MauiSettingsActions.Load, secureOnly: true);
+                await GetClassMetaAsync(settings: settings, mode: XFormSettingsActions.Load, secureOnly: true);
             });
         }
         public static async Task LoadSettingsAsync(Dictionary<string, Tuple<object, Type>> dictionary, bool save = true)
@@ -137,7 +137,7 @@ namespace AndreasReitberger.XForm
         {
             await Task.Run(async delegate
             {
-                await GetMetaFromDictionaryAsync(settings: settings, dictionary: dictionary, mode: MauiSettingsActions.Load, secureOnly: false);
+                await GetMetaFromDictionaryAsync(settings: settings, dictionary: dictionary, mode: XFormSettingsActions.Load, secureOnly: false);
                 // Save the restored settings right away
                 if (save) await SaveSettingsAsync(settings: settings);
             });
@@ -155,7 +155,7 @@ namespace AndreasReitberger.XForm
         }
         public static void SaveObjectSetting<T>(object settings, Expression<Func<SO, T>> value)
         {
-            GetExpressionMeta(settings, value, MauiSettingsActions.Save);
+            GetExpressionMeta(settings, value, XFormSettingsActions.Save);
         }
         public void SaveObjectSetting<T>(Expression<Func<SO, T>> value)
         {
@@ -167,7 +167,7 @@ namespace AndreasReitberger.XForm
         }
         public static void SaveSettings(object settings)
         {
-            GetClassMeta(settings, MauiSettingsActions.Save);
+            GetClassMeta(settings, XFormSettingsActions.Save);
         }
         public static async Task SaveSettingsAsync()
         {
@@ -180,7 +180,7 @@ namespace AndreasReitberger.XForm
         {
             await Task.Run(async delegate
             {
-                await GetClassMetaAsync(settings: settings, mode: MauiSettingsActions.Save);
+                await GetClassMetaAsync(settings: settings, mode: XFormSettingsActions.Save);
             });
         }
         public static async Task SaveSecureSettingsAsync()
@@ -194,7 +194,7 @@ namespace AndreasReitberger.XForm
         {
             await Task.Run(async delegate
             {
-                await GetClassMetaAsync(settings: settings, mode: MauiSettingsActions.Save, secureOnly: true);
+                await GetClassMetaAsync(settings: settings, mode: XFormSettingsActions.Save, secureOnly: true);
             });
         }
         #endregion
@@ -214,7 +214,7 @@ namespace AndreasReitberger.XForm
         }
         public static void DeleteObjectSetting<T>(object settings, Expression<Func<SO, T>> value)
         {
-            GetExpressionMeta(settings, value, MauiSettingsActions.Delete);
+            GetExpressionMeta(settings, value, XFormSettingsActions.Delete);
         }
         public void DeleteObjectSettings()
         {
@@ -222,7 +222,7 @@ namespace AndreasReitberger.XForm
         }
         public static void DeleteSettings(object settings)
         {
-            GetClassMeta(settings, MauiSettingsActions.Delete);
+            GetClassMeta(settings, XFormSettingsActions.Delete);
         }
         #endregion
 
@@ -243,7 +243,7 @@ namespace AndreasReitberger.XForm
 
         public static void LoadObjectDefaultSetting<T>(object settings, Expression<Func<SO, T>> value)
         {
-            GetExpressionMeta(settings, value, MauiSettingsActions.LoadDefaults);
+            GetExpressionMeta(settings, value, XFormSettingsActions.LoadDefaults);
         }
         public void LoadObjectDefaultSettings()
         {
@@ -251,7 +251,7 @@ namespace AndreasReitberger.XForm
         }
         public static void LoadDefaultSettings(object settings)
         {
-            GetClassMeta(settings, MauiSettingsActions.LoadDefaults);
+            GetClassMeta(settings, XFormSettingsActions.LoadDefaults);
         }
         #endregion
 
@@ -270,15 +270,15 @@ namespace AndreasReitberger.XForm
 
                 IEnumerable<MemberInfo> declaredMembers = settings.GetType().GetTypeInfo().DeclaredMembers;
 
-                MauiSettingsMemberInfo settingsObjectInfo = new();
-                MauiSettingsInfo settingsInfo = new();
+                XFormSettingsMemberInfo settingsObjectInfo = new();
+                XFormSettingsInfo settingsInfo = new();
 
                 foreach (MemberInfo mInfo in declaredMembers)
                 {
                     settingsObjectInfo.OrignalSettingsObject = settings;
                     settingsObjectInfo.Info = mInfo;
                     // Handles saving the settings to the Maui.Storage.Preferences
-                    MauiSettingsInfo settingsPair = await ProcessSettingsInfoAsKeyValuePairAsync(settingsObjectInfo, settingsInfo);
+                    XFormSettingsInfo settingsPair = await ProcessSettingsInfoAsKeyValuePairAsync(settingsObjectInfo, settingsInfo);
                     if (settingsPair != null)
                     {
                         setting.TryAdd(settingsPair.Name, new Tuple<object, Type>(settingsPair.Value ?? settingsPair.Default, settingsPair.SettingsType));
@@ -309,15 +309,15 @@ namespace AndreasReitberger.XForm
             ConcurrentDictionary<string, Tuple<object, Type>> setting = new();
             List<MemberInfo> members = GetClassMetaAsList(settings);
 
-            MauiSettingsMemberInfo settingsObjectInfo = new();
-            MauiSettingsInfo settingsInfo = new();
+            XFormSettingsMemberInfo settingsObjectInfo = new();
+            XFormSettingsInfo settingsInfo = new();
 
             foreach (MemberInfo mInfo in members)
             {
                 settingsObjectInfo.OrignalSettingsObject = settings;
                 settingsObjectInfo.Info = mInfo;
                 // Handles saving the settings to the Maui.Storage.Preferences
-                MauiSettingsInfo settingsPair = await ProcessSettingsInfoAsKeyValuePairAsync(settingsObjectInfo, settingsInfo);
+                XFormSettingsInfo settingsPair = await ProcessSettingsInfoAsKeyValuePairAsync(settingsObjectInfo, settingsInfo);
                 if (settingsPair != null)
                 {
                     setting.TryAdd(settingsPair.Name, new Tuple<object, Type>(settingsPair.Value ?? settingsPair.Default, settingsPair.SettingsType));
@@ -345,7 +345,7 @@ namespace AndreasReitberger.XForm
 
         public static async Task<Tuple<string, Tuple<object, Type>>> ToSettingsTupleAsync<T>(object settings, Expression<Func<SO, T>> value)
         {
-            MauiSettingsInfo info = await GetExpressionMetaAsKeyValuePairAsync(settings: settings, value: value);
+            XFormSettingsInfo info = await GetExpressionMetaAsKeyValuePairAsync(settings: settings, value: value);
             return new(info.Name, new(info.Value, info.SettingsType));
         }
         #endregion
@@ -358,20 +358,20 @@ namespace AndreasReitberger.XForm
                 // Get all member infos from the passed settingsObject
                 IEnumerable<MemberInfo> declaredMembers = settings.GetType().GetTypeInfo().DeclaredMembers;
 
-                MauiSettingsMemberInfo settingsObjectInfo = new();
-                MauiSettingsInfo settingsInfo = new();
+                XFormSettingsMemberInfo settingsObjectInfo = new();
+                XFormSettingsInfo settingsInfo = new();
                 return declaredMembers?.ToList();
             }
         }
-        static void GetClassMeta(object settings, MauiSettingsActions mode, MauiSettingsTarget target = MauiSettingsTarget.Local)
+        static void GetClassMeta(object settings, XFormSettingsActions mode, XFormSettingsTarget target = XFormSettingsTarget.Local)
         {
             lock (lockObject)
             {
                 // Get all member infos from the passed settingsObject
                 IEnumerable<MemberInfo> declaredMembers = settings.GetType().GetTypeInfo().DeclaredMembers;
 
-                MauiSettingsMemberInfo settingsObjectInfo = new();
-                MauiSettingsInfo settingsInfo = new();
+                XFormSettingsMemberInfo settingsObjectInfo = new();
+                XFormSettingsInfo settingsInfo = new();
 
                 foreach (MemberInfo mInfo in declaredMembers)
                 {
@@ -382,7 +382,7 @@ namespace AndreasReitberger.XForm
                 }
             }
         }
-        static async Task GetClassMetaAsync(object settings, MauiSettingsActions mode, MauiSettingsTarget target = MauiSettingsTarget.Local, bool secureOnly = false)
+        static async Task GetClassMetaAsync(object settings, XFormSettingsActions mode, XFormSettingsTarget target = XFormSettingsTarget.Local, bool secureOnly = false)
         {
             //lock (lockObject)
             if (true)
@@ -390,8 +390,8 @@ namespace AndreasReitberger.XForm
                 // Get all member infos from the passed settingsObject
                 IEnumerable<MemberInfo> declaredMembers = settings.GetType().GetTypeInfo().DeclaredMembers;
 
-                MauiSettingsMemberInfo settingsObjectInfo = new();
-                MauiSettingsInfo settingsInfo = new();
+                XFormSettingsMemberInfo settingsObjectInfo = new();
+                XFormSettingsInfo settingsInfo = new();
 
                 foreach (MemberInfo mInfo in declaredMembers)
                 {
@@ -402,7 +402,7 @@ namespace AndreasReitberger.XForm
                 }
             }
         }
-        static async Task GetMetaFromDictionaryAsync(object settings, Dictionary<string, Tuple<object, Type>> dictionary, MauiSettingsActions mode, MauiSettingsTarget target = MauiSettingsTarget.Local, bool secureOnly = false)
+        static async Task GetMetaFromDictionaryAsync(object settings, Dictionary<string, Tuple<object, Type>> dictionary, XFormSettingsActions mode, XFormSettingsTarget target = XFormSettingsTarget.Local, bool secureOnly = false)
         {
             //lock (lockObject)
             if (true)
@@ -410,8 +410,8 @@ namespace AndreasReitberger.XForm
                 // Get all member infos from the passed settingsObject
                 IEnumerable<MemberInfo> declaredMembers = settings.GetType().GetTypeInfo().DeclaredMembers;
 
-                MauiSettingsMemberInfo settingsObjectInfo = new();
-                MauiSettingsInfo settingsInfo = new();
+                XFormSettingsMemberInfo settingsObjectInfo = new();
+                XFormSettingsInfo settingsInfo = new();
 
                 foreach (MemberInfo mInfo in declaredMembers)
                 {
@@ -442,58 +442,58 @@ namespace AndreasReitberger.XForm
             }
         }
 
-        static void GetExpressionMeta<T>(object settings, Expression<Func<SO, T>> value, MauiSettingsActions mode, MauiSettingsTarget target = MauiSettingsTarget.Local)
+        static void GetExpressionMeta<T>(object settings, Expression<Func<SO, T>> value, XFormSettingsActions mode, XFormSettingsTarget target = XFormSettingsTarget.Local)
         {
             lock (lockObject)
             {
                 if (value.Body is MemberExpression memberExpression)
                 {
-                    _ = ProcessSettingsInfo(new MauiSettingsMemberInfo()
+                    _ = ProcessSettingsInfo(new XFormSettingsMemberInfo()
                     {
                         OrignalSettingsObject = settings,
                         Info = memberExpression.Member,
 
-                    }, new MauiSettingsInfo(), mode, target);
+                    }, new XFormSettingsInfo(), mode, target);
                 }
             }
         }
 
-        static async Task GetExpressionMetaAsync<T>(object settings, Expression<Func<SO, T>> value, MauiSettingsActions mode, MauiSettingsTarget target = MauiSettingsTarget.Local)
+        static async Task GetExpressionMetaAsync<T>(object settings, Expression<Func<SO, T>> value, XFormSettingsActions mode, XFormSettingsTarget target = XFormSettingsTarget.Local)
         {
 
             if (value.Body is MemberExpression memberExpression)
             {
-                _ = await ProcessSettingsInfoAsync(new MauiSettingsMemberInfo()
+                _ = await ProcessSettingsInfoAsync(new XFormSettingsMemberInfo()
                 {
                     OrignalSettingsObject = settings,
                     Info = memberExpression.Member,
 
-                }, new MauiSettingsInfo(), mode, target);
+                }, new XFormSettingsInfo(), mode, target);
             }        
         }
 
-        static async Task<MauiSettingsInfo> GetExpressionMetaAsKeyValuePairAsync<T>(object settings, Expression<Func<SO, T>> value)
+        static async Task<XFormSettingsInfo> GetExpressionMetaAsKeyValuePairAsync<T>(object settings, Expression<Func<SO, T>> value)
         {
             if (value.Body is MemberExpression memberExpression)
             {
-                return await ProcessSettingsInfoAsKeyValuePairAsync(new MauiSettingsMemberInfo()
+                return await ProcessSettingsInfoAsKeyValuePairAsync(new XFormSettingsMemberInfo()
                 {
                     OrignalSettingsObject = settings,
                     Info = memberExpression.Member,
 
-                }, new MauiSettingsInfo());
+                }, new XFormSettingsInfo());
             }
             return new();
         }
 
-        static bool ProcessSettingsInfo(MauiSettingsMemberInfo settingsObjectInfo, MauiSettingsInfo settingsInfo, MauiSettingsActions mode, MauiSettingsTarget target, bool throwOnError = false)
+        static bool ProcessSettingsInfo(XFormSettingsMemberInfo settingsObjectInfo, XFormSettingsInfo settingsInfo, XFormSettingsActions mode, XFormSettingsTarget target, bool throwOnError = false)
         {
             settingsInfo ??= new();
-            MauiSettingBaseAttribute settingBaseAttribute = null;
+            XFormSettingBaseAttribute settingBaseAttribute = null;
             if (settingsObjectInfo.Info is not null)
             {
-                List<MauiSettingAttribute> settingBaseAttributes
-                    = settingsObjectInfo.Info.GetCustomAttributes<MauiSettingAttribute>(inherit: false)
+                List<XFormSettingAttribute> settingBaseAttributes
+                    = settingsObjectInfo.Info.GetCustomAttributes<XFormSettingAttribute>(inherit: false)
                     .ToList();
                 if (settingBaseAttributes?.Count == 0)
                 {
@@ -504,10 +504,10 @@ namespace AndreasReitberger.XForm
             }
             if (settingsObjectInfo.Info is not null)
             {
-                settingsInfo.Name = MauiSettingNameFormater.GetFullSettingName(settingsObjectInfo.OrignalSettingsObject.GetType(), settingsObjectInfo.Info, settingBaseAttribute);
-                settingsInfo.SettingsType = (settingsInfo.SettingsType = MauiSettingsObjectHelper.GetSettingType(settingsObjectInfo.Info));
+                settingsInfo.Name = XFormSettingNameFormater.GetFullSettingName(settingsObjectInfo.OrignalSettingsObject.GetType(), settingsObjectInfo.Info, settingBaseAttribute);
+                settingsInfo.SettingsType = (settingsInfo.SettingsType = XFormSettingsObjectHelper.GetSettingType(settingsObjectInfo.Info));
 
-                settingsInfo.Default = MauiSettingsObjectHelper.GetDefaultValue(settingBaseAttribute, settingsInfo.SettingsType);
+                settingsInfo.Default = XFormSettingsObjectHelper.GetDefaultValue(settingBaseAttribute, settingsInfo.SettingsType);
 
                 //Type type = (settingsInfo.SettingsType = MauiSettingsObjectHelper.GetSettingType(settingsObjectInfo.Info));
                 //settingsInfo.Value = MauiSettingsObjectHelper.GetSettingValue(settingsObjectInfo.Info, settingsObjectInfo.OrignalSettingsObject);
@@ -518,16 +518,16 @@ namespace AndreasReitberger.XForm
                         settingsInfo.Value = ICloudStoreManager.GetValue(settingsInfo.Name) ?? settingsInfo.Default;
                         break;
 #endif
-                    case MauiSettingsTarget.Local:
+                    case XFormSettingsTarget.Local:
                     default:
-                        settingsInfo.Value = MauiSettingsHelper.GetSettingsValue(settingsInfo.Name, settingsInfo.Default);
+                        settingsInfo.Value = XFormSettingsHelper.GetSettingsValue(settingsInfo.Name, settingsInfo.Default);
                         break;
 
                 }
                 //settingsInfo.Value = MauiSettingsHelper.GetSettingsValue(settingsInfo.Name, settingsInfo.Default);
             }
             bool? secure = false;
-            if (settingBaseAttribute is MauiSettingAttribute settingAttribute)
+            if (settingBaseAttribute is XFormSettingAttribute settingAttribute)
             {
                 secure = settingAttribute.Secure;
                 if (secure ?? false)
@@ -552,18 +552,18 @@ namespace AndreasReitberger.XForm
 
             switch (mode)
             {
-                case MauiSettingsActions.Load:
+                case XFormSettingsActions.Load:
                     if (settingBaseAttribute?.DefaultValueInUse ?? false)
                     {
-                        object defaultValue = MauiSettingsObjectHelper.GetDefaultValue(settingBaseAttribute, settingsInfo.SettingsType);
+                        object defaultValue = XFormSettingsObjectHelper.GetDefaultValue(settingBaseAttribute, settingsInfo.SettingsType);
 
                     }
                     // Sets the loaded value back to the settingsObject
-                    MauiSettingsObjectHelper.SetSettingValue(settingsObjectInfo.Info, settingsObjectInfo.OrignalSettingsObject, settingsInfo.Value, settingsInfo.SettingsType);
+                    XFormSettingsObjectHelper.SetSettingValue(settingsObjectInfo.Info, settingsObjectInfo.OrignalSettingsObject, settingsInfo.Value, settingsInfo.SettingsType);
                     break;
-                case MauiSettingsActions.Save:
+                case XFormSettingsActions.Save:
                     // Get the value from the settingsObject
-                    settingsInfo.Value = MauiSettingsObjectHelper.GetSettingValue(settingsObjectInfo.Info, settingsObjectInfo.OrignalSettingsObject);
+                    settingsInfo.Value = XFormSettingsObjectHelper.GetSettingValue(settingsObjectInfo.Info, settingsObjectInfo.OrignalSettingsObject);
                     switch (target)
                     {
 #if IOS
@@ -571,19 +571,19 @@ namespace AndreasReitberger.XForm
                             ICloudStoreManager.SetValue(settingsInfo.Name, settingsInfo.Value?.ToString());
                             break;
 #endif
-                        case MauiSettingsTarget.Local:
+                        case XFormSettingsTarget.Local:
                         default:
-                            MauiSettingsHelper.SetSettingsValue(settingsInfo.Name, settingsInfo.Value);
+                            XFormSettingsHelper.SetSettingsValue(settingsInfo.Name, settingsInfo.Value);
                             break;
                     }
                     break;
-                case MauiSettingsActions.Delete:
-                    object fallbackValue = MauiSettingsObjectHelper.GetDefaultValue(settingBaseAttribute, settingsInfo.SettingsType);
+                case XFormSettingsActions.Delete:
+                    object fallbackValue = XFormSettingsObjectHelper.GetDefaultValue(settingBaseAttribute, settingsInfo.SettingsType);
                     settingsInfo.Value = fallbackValue;
                     settingsInfo.Default = fallbackValue;
                     if (settingsObjectInfo.Info is not null)
                     {
-                        MauiSettingsObjectHelper.SetSettingValue(settingsObjectInfo.Info, settingsObjectInfo.OrignalSettingsObject, fallbackValue, settingsInfo.SettingsType);
+                        XFormSettingsObjectHelper.SetSettingValue(settingsObjectInfo.Info, settingsObjectInfo.OrignalSettingsObject, fallbackValue, settingsInfo.SettingsType);
                     }
                     switch (target)
                     {
@@ -601,17 +601,17 @@ namespace AndreasReitberger.XForm
                             }
                             break;
 #endif
-                        case MauiSettingsTarget.Local:
+                        case XFormSettingsTarget.Local:
                         default:
-                            MauiSettingsHelper.SetSettingsValue(settingsInfo.Name, settingsInfo.Value);
+                            XFormSettingsHelper.SetSettingsValue(settingsInfo.Name, settingsInfo.Value);
                             break;
                     }
                     break;
-                case MauiSettingsActions.LoadDefaults:
-                    object defaulSettingtValue = MauiSettingsObjectHelper.GetDefaultValue(settingBaseAttribute, settingsInfo.SettingsType);
+                case XFormSettingsActions.LoadDefaults:
+                    object defaulSettingtValue = XFormSettingsObjectHelper.GetDefaultValue(settingBaseAttribute, settingsInfo.SettingsType);
                     if (settingsObjectInfo.Info is not null)
                     {
-                        MauiSettingsObjectHelper.SetSettingValue(settingsObjectInfo.Info, settingsObjectInfo.OrignalSettingsObject, defaulSettingtValue, settingsInfo.SettingsType);
+                        XFormSettingsObjectHelper.SetSettingValue(settingsObjectInfo.Info, settingsObjectInfo.OrignalSettingsObject, defaulSettingtValue, settingsInfo.SettingsType);
                     }
                     settingsInfo.Value = defaulSettingtValue;
                     settingsInfo.Default = defaulSettingtValue;
@@ -622,9 +622,9 @@ namespace AndreasReitberger.XForm
                             ICloudStoreManager.SetValue(settingsInfo.Name, settingsInfo.Value?.ToString());
                             break;
 #endif
-                        case MauiSettingsTarget.Local:
+                        case XFormSettingsTarget.Local:
                         default:
-                            MauiSettingsHelper.SetSettingsValue(settingsInfo.Name, settingsInfo.Value);
+                            XFormSettingsHelper.SetSettingsValue(settingsInfo.Name, settingsInfo.Value);
                             break;
                     }
                     break;
@@ -634,14 +634,14 @@ namespace AndreasReitberger.XForm
             return true;
         }
 
-        static async Task<bool> ProcessSettingsInfoAsync(MauiSettingsMemberInfo settingsObjectInfo, MauiSettingsInfo settingsInfo, MauiSettingsActions mode, MauiSettingsTarget target, bool secureOnly = false, bool useValueFromSettingsInfo = false)
+        static async Task<bool> ProcessSettingsInfoAsync(XFormSettingsMemberInfo settingsObjectInfo, XFormSettingsInfo settingsInfo, XFormSettingsActions mode, XFormSettingsTarget target, bool secureOnly = false, bool useValueFromSettingsInfo = false)
         {
             settingsInfo ??= new();
-            MauiSettingBaseAttribute settingBaseAttribute = null;
+            XFormSettingBaseAttribute settingBaseAttribute = null;
             if (settingsObjectInfo.Info is not null)
             {
-                List<MauiSettingAttribute> settingBaseAttributes
-                    = settingsObjectInfo.Info.GetCustomAttributes<MauiSettingAttribute>(inherit: false)
+                List<XFormSettingAttribute> settingBaseAttributes
+                    = settingsObjectInfo.Info.GetCustomAttributes<XFormSettingAttribute>(inherit: false)
                     .ToList();
                 if (settingBaseAttributes?.Count == 0)
                 {
@@ -652,12 +652,12 @@ namespace AndreasReitberger.XForm
             }
             if (settingsObjectInfo.Info is not null)
             {
-                settingsInfo.Name = MauiSettingNameFormater.GetFullSettingName(settingsObjectInfo.OrignalSettingsObject.GetType(), settingsObjectInfo.Info, settingBaseAttribute);
-                settingsInfo.SettingsType = (settingsInfo.SettingsType = MauiSettingsObjectHelper.GetSettingType(settingsObjectInfo.Info));
-                settingsInfo.Default = MauiSettingsObjectHelper.GetDefaultValue(settingBaseAttribute, settingsInfo.SettingsType);
+                settingsInfo.Name = XFormSettingNameFormater.GetFullSettingName(settingsObjectInfo.OrignalSettingsObject.GetType(), settingsObjectInfo.Info, settingBaseAttribute);
+                settingsInfo.SettingsType = (settingsInfo.SettingsType = XFormSettingsObjectHelper.GetSettingType(settingsObjectInfo.Info));
+                settingsInfo.Default = XFormSettingsObjectHelper.GetDefaultValue(settingBaseAttribute, settingsInfo.SettingsType);
             }
             bool secure = false;
-            if (settingBaseAttribute is MauiSettingAttribute settingAttribute)
+            if (settingBaseAttribute is XFormSettingAttribute settingAttribute)
             {
                 secure = settingAttribute.Secure;
                 if (!secure)
@@ -674,12 +674,12 @@ namespace AndreasReitberger.XForm
                         settingsInfo.Value = ICloudStoreManager.GetValue(settingsInfo.Name) ?? settingsInfo.Default;
                         break;
 #endif
-                        case MauiSettingsTarget.Local:
+                        case XFormSettingsTarget.Local:
                         default:
                             if (!useValueFromSettingsInfo)
-                                settingsInfo.Value = MauiSettingsHelper.GetSettingsValue(settingsInfo.Name, settingsInfo.Default);
+                                settingsInfo.Value = XFormSettingsHelper.GetSettingsValue(settingsInfo.Name, settingsInfo.Default);
                             else
-                                settingsInfo.Value = MauiSettingsHelper.ChangeSettingsType(settingsInfo.Value, settingsInfo.Default);
+                                settingsInfo.Value = XFormSettingsHelper.ChangeSettingsType(settingsInfo.Value, settingsInfo.Default);
                             break;
                     }
                     
@@ -693,12 +693,12 @@ namespace AndreasReitberger.XForm
                             throw new NotSupportedException("SecureStorage is not available for iCloud sync!");
                             //break;
 #endif
-                        case MauiSettingsTarget.Local:
+                        case XFormSettingsTarget.Local:
                         default:
                             if (!useValueFromSettingsInfo)
-                                settingsInfo.Value = await MauiSettingsHelper.GetSecureSettingsValueAsync(settingsInfo.Name, settingsInfo.Default as string);
+                                settingsInfo.Value = await XFormSettingsHelper.GetSecureSettingsValueAsync(settingsInfo.Name, settingsInfo.Default as string);
                             else
-                                settingsInfo.Value = MauiSettingsHelper.ChangeSettingsType(settingsInfo.Value, settingsInfo.Default);
+                                settingsInfo.Value = XFormSettingsHelper.ChangeSettingsType(settingsInfo.Value, settingsInfo.Default);
                             break;
                     }
                 }
@@ -722,13 +722,13 @@ namespace AndreasReitberger.XForm
 
             switch (mode)
             {
-                case MauiSettingsActions.Load:
+                case XFormSettingsActions.Load:
                     if (settingBaseAttribute?.DefaultValueInUse ?? false)
                     {
-                        object defaultValue = MauiSettingsObjectHelper.GetDefaultValue(settingBaseAttribute, settingsInfo.SettingsType);
+                        object defaultValue = XFormSettingsObjectHelper.GetDefaultValue(settingBaseAttribute, settingsInfo.SettingsType);
                     }
                     // Sets the loaded value back to the settingsObject
-                    MauiSettingsObjectHelper.SetSettingValue(settingsObjectInfo.Info, settingsObjectInfo.OrignalSettingsObject, settingsInfo.Value, settingsInfo.SettingsType);
+                    XFormSettingsObjectHelper.SetSettingValue(settingsObjectInfo.Info, settingsObjectInfo.OrignalSettingsObject, settingsInfo.Value, settingsInfo.SettingsType);
                     /* => Calling SaveSettingsAsync() after loading
                     if(useValueFromSettingsInfo)
                     {
@@ -761,9 +761,9 @@ namespace AndreasReitberger.XForm
                         }
                     }*/
                     break;
-                case MauiSettingsActions.Save:
+                case XFormSettingsActions.Save:
                     // Get the value from the settingsObject
-                    settingsInfo.Value = MauiSettingsObjectHelper.GetSettingValue(settingsObjectInfo.Info, settingsObjectInfo.OrignalSettingsObject);
+                    settingsInfo.Value = XFormSettingsObjectHelper.GetSettingValue(settingsObjectInfo.Info, settingsObjectInfo.OrignalSettingsObject);
                     switch (target)
                     {
 #if IOS
@@ -771,13 +771,13 @@ namespace AndreasReitberger.XForm
                             ICloudStoreManager.SetValue(settingsInfo.Name, settingsInfo.Value?.ToString());
                             break;
 #endif
-                        case MauiSettingsTarget.Local:
+                        case XFormSettingsTarget.Local:
                         default:
                             if (secure)
                             {
                                 if (settingsInfo.Value is string secureString)
                                 {
-                                    await MauiSettingsHelper.SetSecureSettingsValueAsync(settingsInfo.Name, secureString);
+                                    await XFormSettingsHelper.SetSecureSettingsValueAsync(settingsInfo.Name, secureString);
                                 }
                                 else
                                 {
@@ -786,18 +786,18 @@ namespace AndreasReitberger.XForm
                             }
                             else
                             {
-                                MauiSettingsHelper.SetSettingsValue(settingsInfo.Name, settingsInfo.Value);
+                                XFormSettingsHelper.SetSettingsValue(settingsInfo.Name, settingsInfo.Value);
                             }
                             break;
                     }
                     break;
-                case MauiSettingsActions.Delete:
-                    object fallbackValue = MauiSettingsObjectHelper.GetDefaultValue(settingBaseAttribute, settingsInfo.SettingsType);
+                case XFormSettingsActions.Delete:
+                    object fallbackValue = XFormSettingsObjectHelper.GetDefaultValue(settingBaseAttribute, settingsInfo.SettingsType);
                     settingsInfo.Value = fallbackValue;
                     settingsInfo.Default = fallbackValue;
                     if (settingsObjectInfo.Info is not null)
                     {
-                        MauiSettingsObjectHelper.SetSettingValue(settingsObjectInfo.Info, settingsObjectInfo.OrignalSettingsObject, fallbackValue, settingsInfo.SettingsType);
+                        XFormSettingsObjectHelper.SetSettingValue(settingsObjectInfo.Info, settingsObjectInfo.OrignalSettingsObject, fallbackValue, settingsInfo.SettingsType);
                     }
                     switch (target)
                     {
@@ -815,13 +815,13 @@ namespace AndreasReitberger.XForm
                             }
                             break;
 #endif
-                        case MauiSettingsTarget.Local:
+                        case XFormSettingsTarget.Local:
                         default:
                             if (secure)
                             {
                                 if (settingsInfo.Value is string secureString)
                                 {
-                                    await MauiSettingsHelper.SetSecureSettingsValueAsync(settingsInfo.Name, secureString);
+                                    await XFormSettingsHelper.SetSecureSettingsValueAsync(settingsInfo.Name, secureString);
                                 }
                                 else
                                 {
@@ -830,16 +830,16 @@ namespace AndreasReitberger.XForm
                             }
                             else
                             {
-                                MauiSettingsHelper.SetSettingsValue(settingsInfo.Name, settingsInfo.Value);
+                                XFormSettingsHelper.SetSettingsValue(settingsInfo.Name, settingsInfo.Value);
                             }
                             break;
                     }
                     break;
-                case MauiSettingsActions.LoadDefaults:
-                    object defaulSettingtValue = MauiSettingsObjectHelper.GetDefaultValue(settingBaseAttribute, settingsInfo.SettingsType);
+                case XFormSettingsActions.LoadDefaults:
+                    object defaulSettingtValue = XFormSettingsObjectHelper.GetDefaultValue(settingBaseAttribute, settingsInfo.SettingsType);
                     if (settingsObjectInfo.Info is not null)
                     {
-                        MauiSettingsObjectHelper.SetSettingValue(settingsObjectInfo.Info, settingsObjectInfo.OrignalSettingsObject, defaulSettingtValue, settingsInfo.SettingsType);
+                        XFormSettingsObjectHelper.SetSettingValue(settingsObjectInfo.Info, settingsObjectInfo.OrignalSettingsObject, defaulSettingtValue, settingsInfo.SettingsType);
                     }
                     settingsInfo.Value = defaulSettingtValue;
                     settingsInfo.Default = defaulSettingtValue;
@@ -850,13 +850,13 @@ namespace AndreasReitberger.XForm
                             ICloudStoreManager.SetValue(settingsInfo.Name, settingsInfo.Value?.ToString());
                             break;
 #endif
-                        case MauiSettingsTarget.Local:
+                        case XFormSettingsTarget.Local:
                         default:
                             if (secure)
                             {
                                 if (settingsInfo.Value is string secureString)
                                 {
-                                    await MauiSettingsHelper.SetSecureSettingsValueAsync(settingsInfo.Name, secureString);
+                                    await XFormSettingsHelper.SetSecureSettingsValueAsync(settingsInfo.Name, secureString);
                                 }
                                 else
                                 {
@@ -865,7 +865,7 @@ namespace AndreasReitberger.XForm
                             }
                             else
                             {
-                                MauiSettingsHelper.SetSettingsValue(settingsInfo.Name, settingsInfo.Value);
+                                XFormSettingsHelper.SetSettingsValue(settingsInfo.Name, settingsInfo.Value);
                             }
                             break;
                     }
@@ -876,14 +876,14 @@ namespace AndreasReitberger.XForm
             return true;
         }
 
-        static async Task<MauiSettingsInfo> ProcessSettingsInfoAsKeyValuePairAsync(MauiSettingsMemberInfo settingsObjectInfo, MauiSettingsInfo settingsInfo, bool secureOnly = false)
+        static async Task<XFormSettingsInfo> ProcessSettingsInfoAsKeyValuePairAsync(XFormSettingsMemberInfo settingsObjectInfo, XFormSettingsInfo settingsInfo, bool secureOnly = false)
         {
             settingsInfo ??= new();
-            MauiSettingBaseAttribute settingBaseAttribute = null;
+            XFormSettingBaseAttribute settingBaseAttribute = null;
             if (settingsObjectInfo.Info is not null)
             {
-                List<MauiSettingAttribute> settingBaseAttributes
-                    = settingsObjectInfo.Info.GetCustomAttributes<MauiSettingAttribute>(inherit: false)
+                List<XFormSettingAttribute> settingBaseAttributes
+                    = settingsObjectInfo.Info.GetCustomAttributes<XFormSettingAttribute>(inherit: false)
                     .ToList();
                 if (settingBaseAttributes?.Count == 0)
                 {
@@ -894,16 +894,16 @@ namespace AndreasReitberger.XForm
             }
             if (settingsObjectInfo.Info is not null)
             {
-                settingsInfo.Name = MauiSettingNameFormater.GetFullSettingName(settingsObjectInfo.OrignalSettingsObject.GetType(), settingsObjectInfo.Info, settingBaseAttribute);
-                settingsInfo.SettingsType = (settingsInfo.SettingsType = MauiSettingsObjectHelper.GetSettingType(settingsObjectInfo.Info));
+                settingsInfo.Name = XFormSettingNameFormater.GetFullSettingName(settingsObjectInfo.OrignalSettingsObject.GetType(), settingsObjectInfo.Info, settingBaseAttribute);
+                settingsInfo.SettingsType = (settingsInfo.SettingsType = XFormSettingsObjectHelper.GetSettingType(settingsObjectInfo.Info));
 
-                settingsInfo.Default = MauiSettingsObjectHelper.GetDefaultValue(settingBaseAttribute, settingsInfo.SettingsType);
+                settingsInfo.Default = XFormSettingsObjectHelper.GetDefaultValue(settingBaseAttribute, settingsInfo.SettingsType);
 
                 //Type type = (settingsInfo.SettingsType = MauiSettingsObjectHelper.GetSettingType(settingsObjectInfo.Info));
                 //settingsInfo.Value = MauiSettingsObjectHelper.GetSettingValue(settingsObjectInfo.Info, settingsObjectInfo.OrignalSettingsObject);
                 //settingsInfo.Value = MauiSettingsHelper.GetSettingsValue(settingsInfo.Name, settingsInfo.Default);
             }
-            if (settingBaseAttribute is MauiSettingAttribute settingAttribute)
+            if (settingBaseAttribute is XFormSettingAttribute settingAttribute)
             {
                 bool secure = settingAttribute.Secure;
                 if (!secure)
@@ -911,11 +911,11 @@ namespace AndreasReitberger.XForm
                     // If only secure storage should be loaded, stop here.
                     if (secureOnly)
                         return null;
-                    settingsInfo.Value = MauiSettingsHelper.GetSettingsValue(settingsInfo.Name, settingsInfo.Default);
+                    settingsInfo.Value = XFormSettingsHelper.GetSettingsValue(settingsInfo.Name, settingsInfo.Default);
                 }
                 else if (settingsInfo.SettingsType == typeof(string))
                 {
-                    settingsInfo.Value = await MauiSettingsHelper.GetSecureSettingsValueAsync(settingsInfo.Name, settingsInfo.Default as string);
+                    settingsInfo.Value = await XFormSettingsHelper.GetSecureSettingsValueAsync(settingsInfo.Name, settingsInfo.Default as string);
                 }
                 else
                 {

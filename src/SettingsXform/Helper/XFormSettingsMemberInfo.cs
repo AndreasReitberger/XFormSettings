@@ -1,4 +1,6 @@
-﻿namespace AndreasReitberger.XForm.Attributes
+﻿using System.Reflection;
+
+namespace AndreasReitberger.XForm.Helper
 {
     /*
      * Based on the idea of Advexp.Settings.Local by Alexey Ivakin
@@ -7,12 +9,12 @@
      * 
      * Modifed by Andreas Reitberger to work on .NET MAUI
      */
-
-    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
-    public class MauiSettingAttribute : MauiSettingBaseAttribute
+    internal class XFormSettingsMemberInfo
     {
         #region Properties
-        public bool Secure { get; set; } = false;
+        public object OrignalSettingsObject { get; set; }
+        public MemberInfo Info { get; set; }
+        public Type SettingsType { get; set; }
         #endregion
     }
 }

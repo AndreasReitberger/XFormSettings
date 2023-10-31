@@ -10,13 +10,13 @@ namespace AndreasReitberger.XForm.Utilities
      * 
      * Modifed by Andreas Reitberger to work on .NET MAUI
      */
-    internal class MauiSettingNameFormater
+    internal class XFormSettingNameFormater
     {
         #region Variables
         public const string Version = "v1";
         public const string NamePrefix = "AR";
         #endregion
-        public static string GetFullSettingName(Type settingsType, MemberInfo mi, MauiSettingBaseAttribute baseSettingAttr)
+        public static string GetFullSettingName(Type settingsType, MemberInfo mi, XFormSettingBaseAttribute baseSettingAttr)
         {
             string name;
             if (string.IsNullOrEmpty(baseSettingAttr?.Name))

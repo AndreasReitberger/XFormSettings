@@ -4,7 +4,7 @@ using Xamarin.Essentials;
 
 namespace AndreasReitberger.XForm.Helper
 {
-    internal class MauiSettingsHelper
+    internal class XFormSettingsHelper
     {
         #region Methods
         // Docs: https://docs.microsoft.com/en-us/dotnet/maui/platform-integration/storage/preferences
