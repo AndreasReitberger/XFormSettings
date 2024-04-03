@@ -1,4 +1,5 @@
-﻿using AndreasReitberger.XForm.Attributes;
+﻿using AndreasReitberger.Shared.Core.Utilities;
+using AndreasReitberger.XForm.Attributes;
 #if IOS
 using AndreasReitberger.XForm.Cloud;
 #endif
@@ -11,7 +12,7 @@ using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Runtime.CompilerServices;
+using System.Security;
 using System.Threading.Tasks;
 
 namespace AndreasReitberger.XForm
@@ -28,15 +29,12 @@ namespace AndreasReitberger.XForm
     {
         #region Settings Object
 
-        static object _settingsObject;
+        static object? _settingsObject;
         public static SO SettingsObject
         {
             get
             {
-                if (_settingsObject == null)
-                {
-                    _settingsObject = new SO();
-                }
+                _settingsObject ??= new SO();
                 return (SO)_settingsObject;
             }
         }
@@ -57,306 +55,231 @@ namespace AndreasReitberger.XForm
         #region Methods
 
         #region LoadSettings
-        public static void LoadSettings()
+        public static void LoadSettings() => LoadSettings(settings: SettingsObject);
+        
+        public static void LoadSetting<T>(Expression<Func<SO, T>> value) => LoadObjectSetting(SettingsObject, value);
+        
+        public static Task LoadSettingAsync<T>(Expression<Func<SO, T>> value, string? key = null) => Task.Run(async delegate
         {
-            LoadSettings(settings: SettingsObject);
-        }
-        public static void LoadSetting<T>(Expression<Func<SO, T>> value)
+            await LoadObjectSettingAsync(SettingsObject, value, key: key);
+        });
+        public static Task LoadSecureSettingAsync<T>(Expression<Func<SO, T>> value, string? key = null) => Task.Run(async delegate
         {
-            LoadObjectSetting(SettingsObject, value);
-        }
-        public static async Task LoadSettingAsync<T>(Expression<Func<SO, T>> value)
+            await LoadSecureObjectSettingAsync(SettingsObject, value, key: key);
+        });
+
+        public void LoadObjectSettings() => LoadSettings(this);
+        
+        public static void LoadObjectSetting<T>(object settingsObject, Expression<Func<SO, T>> value) 
+            => GetExpressionMeta(settings: settingsObject, value, XFormSettingsActions.Load);
+        
+        public static Task LoadObjectSettingAsync<T>(object settingsObject, Expression<Func<SO, T>> value, string? key = null) => Task.Run(async delegate
         {
-            await Task.Run(async delegate
-            {
-                await LoadObjectSettingAsync(SettingsObject, value);
-            });
-        }
-        public void LoadObjectSettings()
+            await GetExpressionMetaAsync(settings: settingsObject, value, XFormSettingsActions.Load, key: key);
+        });
+
+        public static Task LoadSecureObjectSettingAsync<T>(object settingsObject, Expression<Func<SO, T>> value, string? key = null) => Task.Run(async delegate
         {
-            LoadSettings(this);
-        }
-        public static void LoadObjectSetting<T>(object settingsObject, Expression<Func<SO, T>> value)
+            await GetExpressionMetaAsync(settings: settingsObject, value, XFormSettingsActions.Load, secureOnly: true, key: key);
+        });
+
+        public static void LoadSettings(object settings) => GetClassMeta(settings: settings, mode: XFormSettingsActions.Load);
+        
+        public static Task LoadSettingsAsync(string? key = null) => Task.Run(async delegate
         {
-            GetExpressionMeta(settings: settingsObject, value, XFormSettingsActions.Load);
-        }
-        public static async Task LoadObjectSettingAsync<T>(object settingsObject, Expression<Func<SO, T>> value)
+            await LoadSettingsAsync(settings: SettingsObject, key: key);
+        });
+        
+        public static Task LoadSettingsAsync(object settings, string? key = null) => Task.Run(async delegate
         {
-            await Task.Run(async delegate
-            {
-                await GetExpressionMetaAsync(settings: settingsObject, value, XFormSettingsActions.Load);
-            });
-        }
-        public static void LoadSettings(object settings)
+            await GetClassMetaAsync(settings: settings, mode: XFormSettingsActions.Load, key: key);
+        });
+        
+        public static Task LoadSecureSettingsAsync(string? key = null) => Task.Run(async delegate
         {
-            GetClassMeta(settings: settings, mode: XFormSettingsActions.Load);
-        }
-        public static async Task LoadSettingsAsync()
+            await LoadSecureSettingsAsync(settings: SettingsObject, key: key);
+        });
+        
+        public static Task LoadSecureSettingsAsync(object settings, string? key = null) => Task.Run(async delegate
         {
-            await Task.Run(async delegate
-            {
-                await LoadSettingsAsync(settings: SettingsObject);
-            });
-        }
-        public static async Task LoadSettingsAsync(object settings)
+            await GetClassMetaAsync(settings: settings, mode: XFormSettingsActions.Load, secureOnly: true, key: key);
+        });
+        
+        public static Task LoadSettingsAsync(Dictionary<string, Tuple<object, Type>> dictionary, bool save = true, string? key = null) => Task.Run(async delegate
         {
-            await Task.Run(async delegate
-            {
-                await GetClassMetaAsync(settings: settings, mode: XFormSettingsActions.Load);
-            });
-        }
-        public static async Task LoadSecureSettingsAsync()
+            await LoadSettingsAsync(settings: SettingsObject, dictionary: dictionary, save: save, key: key);
+        });
+        
+        public static Task LoadSettingsAsync(string settingsKey, Tuple<object, Type> data, bool save = true, string? key = null) => Task.Run(async delegate
         {
-            await Task.Run(async delegate
-            {
-                await LoadSecureSettingsAsync(settings: SettingsObject);
-            });
-        }
-        public static async Task LoadSecureSettingsAsync(object settings)
+            await LoadSettingsAsync(settings: SettingsObject, dictionary: new() { { settingsKey, data} }, save: save, key: key);
+        });
+        
+        public static Task LoadSettingsAsync(object settings, Dictionary<string, Tuple<object, Type>> dictionary, bool save = true, string? key = null) => Task.Run(async delegate
         {
-            await Task.Run(async delegate
-            {
-                await GetClassMetaAsync(settings: settings, mode: XFormSettingsActions.Load, secureOnly: true);
-            });
-        }
-        public static async Task LoadSettingsAsync(Dictionary<string, Tuple<object, Type>> dictionary, bool save = true)
-        {
-            await Task.Run(async delegate
-            {
-                await LoadSettingsAsync(settings: SettingsObject, dictionary: dictionary, save: save);
-            });
-        }
-        public static async Task LoadSettingsAsync(string key, Tuple<object, Type> data, bool save = true)
-        {
-            await Task.Run(async delegate
-            {
-                await LoadSettingsAsync(settings: SettingsObject, dictionary: new() { { key, data} }, save: save);
-            });
-        }
-        public static async Task LoadSettingsAsync(object settings, Dictionary<string, Tuple<object, Type>> dictionary, bool save = true)
-        {
-            await Task.Run(async delegate
-            {
-                await GetMetaFromDictionaryAsync(settings: settings, dictionary: dictionary, mode: XFormSettingsActions.Load, secureOnly: false);
-                // Save the restored settings right away
-                if (save) await SaveSettingsAsync(settings: settings);
-            });
-        }
+            await GetMetaFromDictionaryAsync(settings: settings, dictionary: dictionary, mode: XFormSettingsActions.Load, secureOnly: false, key: key);
+            // Save the restored settings right away
+            if (save) await SaveSettingsAsync(settings: settings, key: key);
+        });
+        
         #endregion
 
         #region SaveSettings
-        public static void SaveSettings()
+        public static void SaveSettings() => SaveSettings(SettingsObject);
+        
+        public static void SaveSetting<T>(Expression<Func<SO, T>> value) => SaveObjectSetting(SettingsObject, value);
+        
+        public static void SaveObjectSetting<T>(object settings, Expression<Func<SO, T>> value) => GetExpressionMeta(settings, value, XFormSettingsActions.Save);
+        
+        public void SaveObjectSetting<T>(Expression<Func<SO, T>> value) => SaveObjectSetting(this, value);
+        
+        public void SaveObjectSettings() => SaveSettings(this);
+        
+        public static void SaveSettings(object settings) => GetClassMeta(settings, XFormSettingsActions.Save);
+        
+        public static Task SaveSettingsAsync(string? key = null) => Task.Run(async delegate
         {
-            SaveSettings(SettingsObject);
-        }
-        public static void SaveSetting<T>(Expression<Func<SO, T>> value)
+            await SaveSettingsAsync(settings: SettingsObject, key: key);
+        });
+        
+        public static Task SaveSettingsAsync(object settings, string? key = null) => Task.Run(async delegate
         {
-            SaveObjectSetting(SettingsObject, value);
-        }
-        public static void SaveObjectSetting<T>(object settings, Expression<Func<SO, T>> value)
+            await GetClassMetaAsync(settings: settings, mode: XFormSettingsActions.Save, key: key);
+        });
+        
+        public static Task SaveSecureSettingsAsync(string? key = null) => Task.Run(async delegate
         {
-            GetExpressionMeta(settings, value, XFormSettingsActions.Save);
-        }
-        public void SaveObjectSetting<T>(Expression<Func<SO, T>> value)
+            await SaveSecureSettingsAsync(settings: SettingsObject, key: key);
+        });
+        
+        public static Task SaveSecureSettingsAsync(object settings, string? key = null) => Task.Run(async delegate
         {
-            SaveObjectSetting(this, value);
-        }
-        public void SaveObjectSettings()
-        {
-            SaveSettings(this);
-        }
-        public static void SaveSettings(object settings)
-        {
-            GetClassMeta(settings, XFormSettingsActions.Save);
-        }
-        public static async Task SaveSettingsAsync()
-        {
-            await Task.Run(async delegate
-            {
-                await SaveSettingsAsync(settings: SettingsObject);
-            });
-        }
-        public static async Task SaveSettingsAsync(object settings)
-        {
-            await Task.Run(async delegate
-            {
-                await GetClassMetaAsync(settings: settings, mode: XFormSettingsActions.Save);
-            });
-        }
-        public static async Task SaveSecureSettingsAsync()
-        {
-            await Task.Run(async delegate
-            {
-                await SaveSecureSettingsAsync(settings: SettingsObject);
-            });
-        }
-        public static async Task SaveSecureSettingsAsync(object settings)
-        {
-            await Task.Run(async delegate
-            {
-                await GetClassMetaAsync(settings: settings, mode: XFormSettingsActions.Save, secureOnly: true);
-            });
-        }
+            await GetClassMetaAsync(settings: settings, mode: XFormSettingsActions.Save, secureOnly: true, key: key);
+        });
+        
         #endregion
 
         #region DeleteSettings
-        public static void DeleteSettings()
-        {
-            DeleteSettings(SettingsObject);
-        }
-        public static void DeleteSetting<T>(Expression<Func<SO, T>> value)
-        {
-            DeleteObjectSetting(SettingsObject, value);
-        }
-        public void DeleteObjectSetting<T>(Expression<Func<SO, T>> value)
-        {
-            DeleteObjectSetting(this, value);
-        }
-        public static void DeleteObjectSetting<T>(object settings, Expression<Func<SO, T>> value)
-        {
-            GetExpressionMeta(settings, value, XFormSettingsActions.Delete);
-        }
-        public void DeleteObjectSettings()
-        {
-            DeleteSettings(this);
-        }
-        public static void DeleteSettings(object settings)
-        {
-            GetClassMeta(settings, XFormSettingsActions.Delete);
-        }
+        public static void DeleteSettings() => DeleteSettings(SettingsObject);
+        
+        public static void DeleteSetting<T>(Expression<Func<SO, T>> value) => DeleteObjectSetting(SettingsObject, value);
+        
+        public void DeleteObjectSetting<T>(Expression<Func<SO, T>> value) => DeleteObjectSetting(this, value);
+        
+        public static void DeleteObjectSetting<T>(object settings, Expression<Func<SO, T>> value) => GetExpressionMeta(settings, value, XFormSettingsActions.Delete);
+        
+        public void DeleteObjectSettings() => DeleteSettings(this);
+        
+        public static void DeleteSettings(object settings) => GetClassMeta(settings, XFormSettingsActions.Delete);
+        
         #endregion
 
         #region LoadDefaults
-        public static void LoadDefaultSettings()
-        {
-            LoadDefaultSettings(SettingsObject);
-        }
-        public static void LoadDefaultSetting<T>(Expression<Func<SO, T>> value)
-        {
-            LoadObjectDefaultSetting(SettingsObject, value);
-        }
-
-        public void LoadObjectDefaultSetting<T>(Expression<Func<SO, T>> value)
-        {
-            LoadObjectDefaultSetting(this, value);
-        }
+        public static void LoadDefaultSettings() => LoadDefaultSettings(SettingsObject);
+        
+        public static void LoadDefaultSetting<T>(Expression<Func<SO, T>> value) => LoadObjectDefaultSetting(SettingsObject, value);
+        
+        public void LoadObjectDefaultSetting<T>(Expression<Func<SO, T>> value) => LoadObjectDefaultSetting(this, value);    
 
         public static void LoadObjectDefaultSetting<T>(object settings, Expression<Func<SO, T>> value)
-        {
-            GetExpressionMeta(settings, value, XFormSettingsActions.LoadDefaults);
-        }
-        public void LoadObjectDefaultSettings()
-        {
-            LoadDefaultSettings(this);
-        }
-        public static void LoadDefaultSettings(object settings)
-        {
-            GetClassMeta(settings, XFormSettingsActions.LoadDefaults);
-        }
+            => GetExpressionMeta(settings, value, XFormSettingsActions.LoadDefaults);
+        
+        public void LoadObjectDefaultSettings() => LoadDefaultSettings(this);
+        
+        public static void LoadDefaultSettings(object settings) => GetClassMeta(settings, XFormSettingsActions.LoadDefaults);
+
         #endregion
 
         #region Conversion
 
-        public static async Task<Dictionary<string, Tuple<object, Type>>> ToDictionaryAsync()
-        {
-            return await ToDictionaryAsync(settings: SettingsObject);
-        }
-        public static async Task<Dictionary<string, Tuple<object, Type>>> ToDictionaryAsync(object settings)
+        public static Task<Dictionary<string, Tuple<object, Type>>> ToDictionaryAsync()
+           => ToDictionaryAsync(settings: SettingsObject);
+
+        public static Task<Dictionary<string, Tuple<object, Type>>> ToDictionaryAsync(bool secureOnly = false, string? key = null)
+            => ToDictionaryAsync(settings: SettingsObject, secureOnly: secureOnly, key: key);
+
+        public static async Task<Dictionary<string, Tuple<object, Type>>> ToDictionaryAsync(object? settings, bool secureOnly = false, string? key = null)
         {
             if (true)
             {
-                Dictionary<string, Tuple<object, Type>> setting = new();
-                //List<MemberInfo> members = GetClassMetaAsList(settings);
-
-                IEnumerable<MemberInfo> declaredMembers = settings.GetType().GetTypeInfo().DeclaredMembers;
+                Dictionary<string, Tuple<object, Type>> setting = [];
+                IEnumerable<MemberInfo>? declaredMembers = settings?.GetType().GetTypeInfo().DeclaredMembers;
 
                 XFormSettingsMemberInfo settingsObjectInfo = new();
                 XFormSettingsInfo settingsInfo = new();
+                if (declaredMembers is null) return setting;
 
                 foreach (MemberInfo mInfo in declaredMembers)
                 {
                     settingsObjectInfo.OrignalSettingsObject = settings;
                     settingsObjectInfo.Info = mInfo;
                     // Handles saving the settings to the Maui.Storage.Preferences
-                    XFormSettingsInfo settingsPair = await ProcessSettingsInfoAsKeyValuePairAsync(settingsObjectInfo, settingsInfo);
-                    if (settingsPair != null)
+                    XFormSettingsInfo settingsPair = await ProcessSettingsInfoAsKeyValuePairAsync(settingsObjectInfo, settingsInfo, secureOnly: secureOnly, key: key, keeyEncrypted: true);
+                    if (settingsPair != null && !settingsPair.SkipForExport)
                     {
                         setting.TryAdd(settingsPair.Name, new Tuple<object, Type>(settingsPair.Value ?? settingsPair.Default, settingsPair.SettingsType));
                     }
                 }
-                /*
-                members?.ForEach(member =>
-                {
-                    settingsObjectInfo.OrignalSettingsObject = settings;
-                    settingsObjectInfo.Info = member;
-                    var settingsPair = ProcessSettingsInfoAsKeyValuePair(settingsObjectInfo, settingsInfo);
-                    if (settingsPair != null)
-                    {
-                        setting.TryAdd(settingsPair.Name, new Tuple<object, Type>(settingsPair.Value ?? settingsPair.Default, settingsPair.SettingsType));
-                    }
-                });
-                */
             return setting;
             }
         }
 
-        public static async Task<ConcurrentDictionary<string, Tuple<object, Type>>> ToConcurrentDictionaryAsync()
-        {
-            return await ToConcurrentDictionaryAsync(settings: SettingsObject);
-        }
-        public static async Task<ConcurrentDictionary<string, Tuple<object, Type>>> ToConcurrentDictionaryAsync(object settings)
+        public static Task<ConcurrentDictionary<string, Tuple<object, Type>>> ToConcurrentDictionaryAsync()
+            => ToConcurrentDictionaryAsync(settings: SettingsObject);
+        public static Task<ConcurrentDictionary<string, Tuple<object, Type>>> ToConcurrentDictionaryAsync(bool secureOnly = false, string? key = null)
+            => ToConcurrentDictionaryAsync(settings: SettingsObject, secureOnly: secureOnly, key: key);
+        public static async Task<ConcurrentDictionary<string, Tuple<object, Type>>> ToConcurrentDictionaryAsync(object? settings, bool secureOnly = false, string? key = null)
         {
             ConcurrentDictionary<string, Tuple<object, Type>> setting = new();
-            List<MemberInfo> members = GetClassMetaAsList(settings);
+            List<MemberInfo>? members = GetClassMetaAsList(settings);
 
             XFormSettingsMemberInfo settingsObjectInfo = new();
             XFormSettingsInfo settingsInfo = new();
+            if (members is null) return setting;
 
             foreach (MemberInfo mInfo in members)
             {
                 settingsObjectInfo.OrignalSettingsObject = settings;
                 settingsObjectInfo.Info = mInfo;
                 // Handles saving the settings to the Maui.Storage.Preferences
-                XFormSettingsInfo settingsPair = await ProcessSettingsInfoAsKeyValuePairAsync(settingsObjectInfo, settingsInfo);
-                if (settingsPair != null)
+                XFormSettingsInfo settingsPair = await ProcessSettingsInfoAsKeyValuePairAsync(settingsObjectInfo, settingsInfo, secureOnly: secureOnly, key: key, keeyEncrypted: true);
+                if (settingsPair != null && !settingsPair.SkipForExport)
                 {
                     setting.TryAdd(settingsPair.Name, new Tuple<object, Type>(settingsPair.Value ?? settingsPair.Default, settingsPair.SettingsType));
                 }
             }
-            /*
-            members?.ForEach(member =>
-            {
-                settingsObjectInfo.OrignalSettingsObject = settings;
-                settingsObjectInfo.Info = member;
-                var settingsPair = ProcessSettingsInfoAsKeyValuePair(settingsObjectInfo, settingsInfo);
-                if(settingsPair != null)
-                {
-                    setting.TryAdd(settingsPair.Name, new Tuple<object, Type>(settingsPair.Value ?? settingsPair.Default, settingsPair.SettingsType));
-                }
-            });
-            */
             return setting;
         }
 
-        public static async Task<Tuple<string, Tuple<object, Type>>> ToSettingsTupleAsync<T>(Expression<Func<SO, T>> value)
-        {
-            return await ToSettingsTupleAsync(settings: SettingsObject, value: value);
-        }
+        public static Task<Tuple<string, Tuple<object, Type>>> ToSettingsTupleAsync<T>(Expression<Func<SO, T>> value) 
+            => ToSettingsTupleAsync(settings: SettingsObject, value: value);
+        
 
-        public static async Task<Tuple<string, Tuple<object, Type>>> ToSettingsTupleAsync<T>(object settings, Expression<Func<SO, T>> value)
+        public static async Task<Tuple<string, Tuple<object, Type>>> ToSettingsTupleAsync<T>(object? settings, Expression<Func<SO, T>> value)
         {
             XFormSettingsInfo info = await GetExpressionMetaAsKeyValuePairAsync(settings: settings, value: value);
             return new(info.Name, new(info.Value, info.SettingsType));
         }
         #endregion
 
+        #region Encryption
+
+        public static Task ExhangeKeyAsync(string newKey, string? oldKey = null)
+            => Task.Run(async delegate
+            {
+                await LoadSecureSettingsAsync(key: oldKey);
+                await SaveSettingsAsync(key: newKey);
+            });
+
+        #endregion
+
         #region Private
-        static List<MemberInfo> GetClassMetaAsList(object settings)
+        static List<MemberInfo>? GetClassMetaAsList(object? settings)
         {
             lock (lockObject)
             {
                 // Get all member infos from the passed settingsObject
-                IEnumerable<MemberInfo> declaredMembers = settings.GetType().GetTypeInfo().DeclaredMembers;
+                IEnumerable<MemberInfo>? declaredMembers = settings?.GetType().GetTypeInfo().DeclaredMembers;
 
                 XFormSettingsMemberInfo settingsObjectInfo = new();
                 XFormSettingsInfo settingsInfo = new();
@@ -382,64 +305,57 @@ namespace AndreasReitberger.XForm
                 }
             }
         }
-        static async Task GetClassMetaAsync(object settings, XFormSettingsActions mode, XFormSettingsTarget target = XFormSettingsTarget.Local, bool secureOnly = false)
+        static async Task GetClassMetaAsync(object settings, XFormSettingsActions mode, XFormSettingsTarget target = XFormSettingsTarget.Local, bool secureOnly = false, string? key = null)
         {
-            //lock (lockObject)
-            if (true)
+            // Get all member infos from the passed settingsObject
+            IEnumerable<MemberInfo> declaredMembers = settings.GetType().GetTypeInfo().DeclaredMembers;
+
+            XFormSettingsMemberInfo settingsObjectInfo = new();
+            XFormSettingsInfo settingsInfo = new();
+
+            foreach (MemberInfo mInfo in declaredMembers)
             {
-                // Get all member infos from the passed settingsObject
-                IEnumerable<MemberInfo> declaredMembers = settings.GetType().GetTypeInfo().DeclaredMembers;
-
-                XFormSettingsMemberInfo settingsObjectInfo = new();
-                XFormSettingsInfo settingsInfo = new();
-
-                foreach (MemberInfo mInfo in declaredMembers)
-                {
-                    settingsObjectInfo.OrignalSettingsObject = settings;
-                    settingsObjectInfo.Info = mInfo;
-                    // Handles saving the settings to the Maui.Storage.Preferences
-                    _ = await ProcessSettingsInfoAsync(settingsObjectInfo, settingsInfo, mode, target, secureOnly: secureOnly);
-                }
-            }
+                settingsObjectInfo.OrignalSettingsObject = settings;
+                settingsObjectInfo.Info = mInfo;
+                // Handles saving the settings to the Maui.Storage.Preferences
+                _ = await ProcessSettingsInfoAsync(settingsObjectInfo, settingsInfo, mode, target, secureOnly: secureOnly, key: key);
+            }        
         }
-        static async Task GetMetaFromDictionaryAsync(object settings, Dictionary<string, Tuple<object, Type>> dictionary, XFormSettingsActions mode, XFormSettingsTarget target = XFormSettingsTarget.Local, bool secureOnly = false)
+        static async Task GetMetaFromDictionaryAsync(object settings, Dictionary<string, Tuple<object, Type>> dictionary, XFormSettingsActions mode, XFormSettingsTarget target = XFormSettingsTarget.Local, bool secureOnly = false, string? key = null)
         {
-            //lock (lockObject)
-            if (true)
+            // Get all member infos from the passed settingsObject
+            IEnumerable<MemberInfo> declaredMembers = settings.GetType().GetTypeInfo().DeclaredMembers;
+
+            XFormSettingsMemberInfo settingsObjectInfo = new();
+            XFormSettingsInfo settingsInfo = new();
+
+            foreach (MemberInfo mInfo in declaredMembers)
             {
-                // Get all member infos from the passed settingsObject
-                IEnumerable<MemberInfo> declaredMembers = settings.GetType().GetTypeInfo().DeclaredMembers;
-
-                XFormSettingsMemberInfo settingsObjectInfo = new();
-                XFormSettingsInfo settingsInfo = new();
-
-                foreach (MemberInfo mInfo in declaredMembers)
+                bool useValueFromSettingsInfo = false;
+                // Try to find the matching settingsKey
+                KeyValuePair<string, Tuple<object, Type>>? keyPair = dictionary?.FirstOrDefault(keypair => 
+                    keypair.Key.EndsWith(mInfo.Name
+                    //?.Replace("get_", string.Empty)
+                    ));
+                if (keyPair?.Key != null)
                 {
-                    bool useValueFromSettingsInfo = false;
-                    // Try to find the matching key
-                    KeyValuePair<string, Tuple<object, Type>>? keyPair = dictionary?.FirstOrDefault(keypair => 
-                        keypair.Key.EndsWith(mInfo.Name
-                        //?.Replace("get_", string.Empty)
-                        ));
-                    if (keyPair?.Key != null)
+                    useValueFromSettingsInfo = true;
+                    // If a matching settingsKey was found, prepare the settingsInfo with the loaded data
+                    settingsInfo = new()
                     {
-                        useValueFromSettingsInfo = true;
-                        // If a matching key was found, prepare the settingsInfo with the loaded data
-                        settingsInfo = new()
-                        {
-                            Name = mInfo.Name?.Replace("get_", string.Empty),
-                            Value = keyPair.Value.Value.Item1,
-                            SettingsType = keyPair.Value.Value.Item2,
-                        };
-                    }
-                    else
-                        useValueFromSettingsInfo = false;
-                    settingsObjectInfo.OrignalSettingsObject = settings;
-                    settingsObjectInfo.Info = mInfo;
-                    // Handles saving the settings to the Maui.Storage.Preferences
-                    _ = await ProcessSettingsInfoAsync(settingsObjectInfo, settingsInfo, mode, target, secureOnly: secureOnly, useValueFromSettingsInfo: useValueFromSettingsInfo);
+                        Name = mInfo.Name?.Replace("get_", string.Empty),
+                        Value = keyPair.Value.Value.Item1,
+                        SettingsType = keyPair.Value.Value.Item2,
+                    };
                 }
-            }
+                else
+                    useValueFromSettingsInfo = false;
+                settingsObjectInfo.OrignalSettingsObject = settings;
+                settingsObjectInfo.Info = mInfo;
+                // Handles saving the settings to the Maui.Storage.Preferences
+                _ = await ProcessSettingsInfoAsync(
+                    settingsObjectInfo, settingsInfo, mode, target, secureOnly: secureOnly, useValueFromSettingsInfo: useValueFromSettingsInfo, key: key);
+            }          
         }
 
         static void GetExpressionMeta<T>(object settings, Expression<Func<SO, T>> value, XFormSettingsActions mode, XFormSettingsTarget target = XFormSettingsTarget.Local)
@@ -458,7 +374,7 @@ namespace AndreasReitberger.XForm
             }
         }
 
-        static async Task GetExpressionMetaAsync<T>(object settings, Expression<Func<SO, T>> value, XFormSettingsActions mode, XFormSettingsTarget target = XFormSettingsTarget.Local)
+        static async Task GetExpressionMetaAsync<T>(object settings, Expression<Func<SO, T>> value, XFormSettingsActions mode, XFormSettingsTarget target = XFormSettingsTarget.Local, bool secureOnly = false, string? key = null)
         {
 
             if (value.Body is MemberExpression memberExpression)
@@ -468,11 +384,11 @@ namespace AndreasReitberger.XForm
                     OrignalSettingsObject = settings,
                     Info = memberExpression.Member,
 
-                }, new XFormSettingsInfo(), mode, target);
+                }, new XFormSettingsInfo(), mode, target, secureOnly: secureOnly, key: key);
             }        
         }
 
-        static async Task<XFormSettingsInfo> GetExpressionMetaAsKeyValuePairAsync<T>(object settings, Expression<Func<SO, T>> value)
+        static async Task<XFormSettingsInfo> GetExpressionMetaAsKeyValuePairAsync<T>(object settings, Expression<Func<SO, T>> value, string? key = null)
         {
             if (value.Body is MemberExpression memberExpression)
             {
@@ -481,7 +397,7 @@ namespace AndreasReitberger.XForm
                     OrignalSettingsObject = settings,
                     Info = memberExpression.Member,
 
-                }, new XFormSettingsInfo());
+                }, new XFormSettingsInfo(), key: key);
             }
             return new();
         }
@@ -489,7 +405,7 @@ namespace AndreasReitberger.XForm
         static bool ProcessSettingsInfo(XFormSettingsMemberInfo settingsObjectInfo, XFormSettingsInfo settingsInfo, XFormSettingsActions mode, XFormSettingsTarget target, bool throwOnError = false)
         {
             settingsInfo ??= new();
-            XFormSettingBaseAttribute settingBaseAttribute = null;
+            XFormSettingBaseAttribute? settingBaseAttribute = null;
             if (settingsObjectInfo.Info is not null)
             {
                 List<XFormSettingAttribute> settingBaseAttributes
@@ -634,10 +550,10 @@ namespace AndreasReitberger.XForm
             return true;
         }
 
-        static async Task<bool> ProcessSettingsInfoAsync(XFormSettingsMemberInfo settingsObjectInfo, XFormSettingsInfo settingsInfo, XFormSettingsActions mode, XFormSettingsTarget target, bool secureOnly = false, bool useValueFromSettingsInfo = false)
+        static async Task<bool> ProcessSettingsInfoAsync(XFormSettingsMemberInfo settingsObjectInfo, XFormSettingsInfo settingsInfo, XFormSettingsActions mode, XFormSettingsTarget target, bool secureOnly = false, bool useValueFromSettingsInfo = false, string? key = null, bool keepEncrypted = false)
         {
             settingsInfo ??= new();
-            XFormSettingBaseAttribute settingBaseAttribute = null;
+            XFormSettingBaseAttribute? settingBaseAttribute = null;
             if (settingsObjectInfo.Info is not null)
             {
                 List<XFormSettingAttribute> settingBaseAttributes
@@ -660,6 +576,10 @@ namespace AndreasReitberger.XForm
             if (settingBaseAttribute is XFormSettingAttribute settingAttribute)
             {
                 secure = settingAttribute.Secure;
+                // Save the states
+                settingsInfo.IsSecure = secure;
+                settingsInfo.Encrypt = settingAttribute.Encrypt;
+                settingsInfo.SkipForExport = settingAttribute.SkipForExport;
                 if (!secure)
                 {
                     // If only secure storage should be loaded, stop here.
@@ -727,39 +647,20 @@ namespace AndreasReitberger.XForm
                     {
                         object defaultValue = XFormSettingsObjectHelper.GetDefaultValue(settingBaseAttribute, settingsInfo.SettingsType);
                     }
+                    if (secure && settingsInfo.Encrypt && !keepEncrypted)
+                    {
+                        if (string.IsNullOrEmpty(key))
+                            throw new ArgumentNullException(nameof(key));
+                        if (settingsInfo.Value is string secureString)
+                        {
+                            // Decrypt string
+                            string decryptedString = EncryptionManager.DecryptStringFromBase64String(secureString, key);
+                            XFormSettingsObjectHelper.SetSettingValue(settingsObjectInfo.Info, settingsObjectInfo.OrignalSettingsObject, decryptedString, settingsInfo.SettingsType);
+                            break;
+                        }
+                    }
                     // Sets the loaded value back to the settingsObject
                     XFormSettingsObjectHelper.SetSettingValue(settingsObjectInfo.Info, settingsObjectInfo.OrignalSettingsObject, settingsInfo.Value, settingsInfo.SettingsType);
-                    /* => Calling SaveSettingsAsync() after loading
-                    if(useValueFromSettingsInfo)
-                    {
-                        // If the value is used from the dictionary, save it.
-                        switch (target)
-                        {
-#if IOS
-                        case MauiSettingsTarget.ICloud:
-                            ICloudStoreManager.SetValue(settingsInfo.Name, settingsInfo.Value?.ToString());
-                            break;
-#endif
-                            case MauiSettingsTarget.Local:
-                            default:
-                                if (secure)
-                                {
-                                    if (settingsInfo.Value is string secureString)
-                                    {
-                                        await MauiSettingsHelper.SetSecureSettingsValueAsync(settingsInfo.Name, secureString);
-                                    }
-                                    else
-                                    {
-                                        throw new InvalidDataException($"Only data type of '{typeof(string)}' is allowed for secure storage!");
-                                    }
-                                }
-                                else
-                                {
-                                    MauiSettingsHelper.SetSettingsValue(settingsInfo.Name, settingsInfo.Value);
-                                }
-                                break;
-                        }
-                    }*/
                     break;
                 case XFormSettingsActions.Save:
                     // Get the value from the settingsObject
@@ -777,7 +678,16 @@ namespace AndreasReitberger.XForm
                             {
                                 if (settingsInfo.Value is string secureString)
                                 {
-                                    await XFormSettingsHelper.SetSecureSettingsValueAsync(settingsInfo.Name, secureString);
+                                    if (settingsInfo.Encrypt)
+                                    {
+                                        if (string.IsNullOrEmpty(key))
+                                            throw new ArgumentNullException(nameof(key));
+                                        // Encrypt string
+                                        string encryptedString = EncryptionManager.EncryptStringToBase64String(secureString, key);
+                                        await XFormSettingsHelper.SetSecureSettingsValueAsync(settingsInfo.Name, encryptedString);
+                                    }
+                                    else
+                                        await XFormSettingsHelper.SetSecureSettingsValueAsync(settingsInfo.Name, secureString);
                                 }
                                 else
                                 {
@@ -821,7 +731,14 @@ namespace AndreasReitberger.XForm
                             {
                                 if (settingsInfo.Value is string secureString)
                                 {
-                                    await XFormSettingsHelper.SetSecureSettingsValueAsync(settingsInfo.Name, secureString);
+                                    if (settingsInfo.Encrypt && !string.IsNullOrEmpty(key))
+                                    {
+                                        // Decrypt string
+                                        string encryptedString = EncryptionManager.EncryptStringToBase64String(secureString, key);
+                                        await XFormSettingsHelper.SetSecureSettingsValueAsync(settingsInfo.Name, encryptedString);
+                                    }
+                                    else
+                                        await XFormSettingsHelper.SetSecureSettingsValueAsync(settingsInfo.Name, secureString);
                                 }
                                 else
                                 {
@@ -856,7 +773,14 @@ namespace AndreasReitberger.XForm
                             {
                                 if (settingsInfo.Value is string secureString)
                                 {
-                                    await XFormSettingsHelper.SetSecureSettingsValueAsync(settingsInfo.Name, secureString);
+                                    if (settingsInfo.Encrypt && !string.IsNullOrEmpty(key))
+                                    {
+                                        // Decrypt string
+                                        string encryptedString = EncryptionManager.EncryptStringToBase64String(secureString, key);
+                                        await XFormSettingsHelper.SetSecureSettingsValueAsync(settingsInfo.Name, encryptedString);
+                                    }
+                                    else
+                                        await XFormSettingsHelper.SetSecureSettingsValueAsync(settingsInfo.Name, secureString);
                                 }
                                 else
                                 {
@@ -876,10 +800,10 @@ namespace AndreasReitberger.XForm
             return true;
         }
 
-        static async Task<XFormSettingsInfo> ProcessSettingsInfoAsKeyValuePairAsync(XFormSettingsMemberInfo settingsObjectInfo, XFormSettingsInfo settingsInfo, bool secureOnly = false)
+        static async Task<XFormSettingsInfo?> ProcessSettingsInfoAsKeyValuePairAsync(XFormSettingsMemberInfo settingsObjectInfo, XFormSettingsInfo settingsInfo, bool secureOnly = false, string? key = null, bool keeyEncrypted = false)
         {
             settingsInfo ??= new();
-            XFormSettingBaseAttribute settingBaseAttribute = null;
+            XFormSettingBaseAttribute? settingBaseAttribute = null;
             if (settingsObjectInfo.Info is not null)
             {
                 List<XFormSettingAttribute> settingBaseAttributes
@@ -891,21 +815,17 @@ namespace AndreasReitberger.XForm
                     return null;
                 }
                 settingBaseAttribute = settingBaseAttributes.FirstOrDefault();
-            }
-            if (settingsObjectInfo.Info is not null)
-            {
                 settingsInfo.Name = XFormSettingNameFormater.GetFullSettingName(settingsObjectInfo.OrignalSettingsObject.GetType(), settingsObjectInfo.Info, settingBaseAttribute);
                 settingsInfo.SettingsType = (settingsInfo.SettingsType = XFormSettingsObjectHelper.GetSettingType(settingsObjectInfo.Info));
-
                 settingsInfo.Default = XFormSettingsObjectHelper.GetDefaultValue(settingBaseAttribute, settingsInfo.SettingsType);
-
-                //Type type = (settingsInfo.SettingsType = MauiSettingsObjectHelper.GetSettingType(settingsObjectInfo.Info));
-                //settingsInfo.Value = MauiSettingsObjectHelper.GetSettingValue(settingsObjectInfo.Info, settingsObjectInfo.OrignalSettingsObject);
-                //settingsInfo.Value = MauiSettingsHelper.GetSettingsValue(settingsInfo.Name, settingsInfo.Default);
             }
             if (settingBaseAttribute is XFormSettingAttribute settingAttribute)
             {
                 bool secure = settingAttribute.Secure;
+                // Save the states
+                settingsInfo.IsSecure = secure;
+                settingsInfo.Encrypt = settingAttribute.Encrypt;
+                settingsInfo.SkipForExport = settingAttribute.SkipForExport;
                 if (!secure)
                 {
                     // If only secure storage should be loaded, stop here.
@@ -916,14 +836,20 @@ namespace AndreasReitberger.XForm
                 else if (settingsInfo.SettingsType == typeof(string))
                 {
                     settingsInfo.Value = await XFormSettingsHelper.GetSecureSettingsValueAsync(settingsInfo.Name, settingsInfo.Default as string);
+                    if (settingsInfo.Encrypt && !keeyEncrypted)
+                    {
+                        if (string.IsNullOrEmpty(key))
+                            throw new ArgumentNullException(nameof(key));
+                        // Decrypt string
+                        string decryptedString = EncryptionManager.DecryptStringFromBase64String(settingsInfo.Value as string, key);
+                        settingsInfo.Value = decryptedString;
+                    }
                 }
                 else
                 {
                     throw new InvalidDataException($"Only data type of '{typeof(string)}' is allowed for secure storage!");
                 }
             }
-            // Sets the loaded value back to the settingsObject
-            //MauiSettingsObjectHelper.SetSettingValue(settingsObjectInfo.Info, settingsObjectInfo.OrignalSettingsObject, settingsInfo.Value, settingsInfo.SettingsType);
             return settingsInfo;
         }
 

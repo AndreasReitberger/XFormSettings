@@ -4,7 +4,8 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <Nullable>enable</Nullable>
     <RootNamespace>AndreasReitberger.XForm</RootNamespace>
-	<LangVersion>10</LangVersion>
+	<LangVersion>12</LangVersion>
+	<Nullable>enable</Nullable>
 
 	<Copyright>Andreas Reitberger</Copyright>
 	<PackageProjectUrl>https://github.com/AndreasReitberger/XFormSettings</PackageProjectUrl>
@@ -29,6 +30,10 @@
 	<ItemGroup>
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
 		<PackageReference Include="Xamarin.Essentials" Version="1.8.1" />
-		<PackageReference Include="Xamarin.Forms" Version="5.0.0.2622" />
+		<PackageReference Include="Xamarin.Forms" Version="5.0.0.2662" />
+	</ItemGroup>
+	
+	<ItemGroup>
+	  <ProjectReference Include="..\..\..\SharedMauiCoreLibrary\src\SharedNetCoreLibrary\SharedNetCoreLibrary.csproj" />
 	</ItemGroup>
 </Project>
