@@ -4,6 +4,7 @@ using AndreasReitberger.XForm.Attributes;
 using AndreasReitberger.XForm.Cloud;
 #endif
 using AndreasReitberger.XForm.Enums;
+using AndreasReitberger.XForm.Events;
 using AndreasReitberger.XForm.Helper;
 using AndreasReitberger.XForm.Utilities;
 using System.Collections.Concurrent;
@@ -12,7 +13,6 @@ using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Security;
 using System.Threading.Tasks;
 
 namespace AndreasReitberger.XForm
@@ -318,7 +318,8 @@ namespace AndreasReitberger.XForm
                 settingsObjectInfo.OrignalSettingsObject = settings;
                 settingsObjectInfo.Info = mInfo;
                 // Handles saving the settings to the Maui.Storage.Preferences
-                _ = await ProcessSettingsInfoAsync(settingsObjectInfo, settingsInfo, mode, target, secureOnly: secureOnly, key: key);
+                XFormSettingsResults result = await ProcessSettingsInfoAsync(settingsObjectInfo, settingsInfo, mode, target, secureOnly: secureOnly, key: key);
+                if (result == XFormSettingsResults.EncryptionError || result == XFormSettingsResults.Failed) { break; }
             }        
         }
         static async Task GetMetaFromDictionaryAsync(object settings, Dictionary<string, Tuple<object, Type>> dictionary, XFormSettingsActions mode, XFormSettingsTarget target = XFormSettingsTarget.Local, bool secureOnly = false, string? key = null)
@@ -353,8 +354,9 @@ namespace AndreasReitberger.XForm
                 settingsObjectInfo.OrignalSettingsObject = settings;
                 settingsObjectInfo.Info = mInfo;
                 // Handles saving the settings to the Maui.Storage.Preferences
-                _ = await ProcessSettingsInfoAsync(
+                XFormSettingsResults result = await ProcessSettingsInfoAsync(
                     settingsObjectInfo, settingsInfo, mode, target, secureOnly: secureOnly, useValueFromSettingsInfo: useValueFromSettingsInfo, key: key);
+                if (result == XFormSettingsResults.EncryptionError || result == XFormSettingsResults.Failed) { break; }
             }          
         }
 
@@ -388,7 +390,7 @@ namespace AndreasReitberger.XForm
             }        
         }
 
-        static async Task<XFormSettingsInfo> GetExpressionMetaAsKeyValuePairAsync<T>(object settings, Expression<Func<SO, T>> value, string? key = null)
+        static async Task<XFormSettingsInfo?> GetExpressionMetaAsKeyValuePairAsync<T>(object settings, Expression<Func<SO, T>> value, string? key = null)
         {
             if (value.Body is MemberExpression memberExpression)
             {
@@ -550,7 +552,7 @@ namespace AndreasReitberger.XForm
             return true;
         }
 
-        static async Task<bool> ProcessSettingsInfoAsync(XFormSettingsMemberInfo settingsObjectInfo, XFormSettingsInfo settingsInfo, XFormSettingsActions mode, XFormSettingsTarget target, bool secureOnly = false, bool useValueFromSettingsInfo = false, string? key = null, bool keepEncrypted = false)
+        static async Task<XFormSettingsResults> ProcessSettingsInfoAsync(XFormSettingsMemberInfo settingsObjectInfo, XFormSettingsInfo settingsInfo, XFormSettingsActions mode, XFormSettingsTarget target, bool secureOnly = false, bool useValueFromSettingsInfo = false, string? key = null, bool keepEncrypted = false)
         {
             settingsInfo ??= new();
             XFormSettingBaseAttribute? settingBaseAttribute = null;
@@ -562,7 +564,7 @@ namespace AndreasReitberger.XForm
                 if (settingBaseAttributes?.Count == 0)
                 {
                     // If the member has not the needed MauiSettingsAttribute, continue with the search
-                    return false;
+                    return XFormSettingsResults.Skipped;
                 }
                 settingBaseAttribute = settingBaseAttributes.FirstOrDefault();
             }
@@ -584,7 +586,7 @@ namespace AndreasReitberger.XForm
                 {
                     // If only secure storage should be loaded, stop here.
                     if (secureOnly) 
-                        return true;
+                        return XFormSettingsResults.Skipped;
                     // If the value is not used from the passed settingsInfo, load it
 
                     switch (target)
@@ -654,8 +656,23 @@ namespace AndreasReitberger.XForm
                         if (settingsInfo.Value is string secureString)
                         {
                             // Decrypt string
-                            string decryptedString = EncryptionManager.DecryptStringFromBase64String(secureString, key);
-                            XFormSettingsObjectHelper.SetSettingValue(settingsObjectInfo.Info, settingsObjectInfo.OrignalSettingsObject, decryptedString, settingsInfo.SettingsType);
+                            try
+                            {
+                                string decryptedString = EncryptionManager.DecryptStringFromBase64String(secureString, key);
+                                // Throw on key missmatch
+                                if (string.IsNullOrEmpty(decryptedString) && !string.IsNullOrEmpty(secureString))
+                                    throw new Exception($"The secure string is not empty, but the decrypted string is. This indicates a key missmatch!");
+                                XFormSettingsObjectHelper.SetSettingValue(settingsObjectInfo.Info, settingsObjectInfo.OrignalSettingsObject, decryptedString, settingsInfo.SettingsType);
+                            }
+                            catch (Exception ex)
+                            {
+                                OnEncryptionErrorEvent(new()
+                                {
+                                    Exception = ex,
+                                    Key = key,
+                                });
+                                return XFormSettingsResults.EncryptionError;
+                            }
                             break;
                         }
                     }
@@ -733,9 +750,21 @@ namespace AndreasReitberger.XForm
                                 {
                                     if (settingsInfo.Encrypt && !string.IsNullOrEmpty(key))
                                     {
-                                        // Decrypt string
-                                        string encryptedString = EncryptionManager.EncryptStringToBase64String(secureString, key);
-                                        await XFormSettingsHelper.SetSecureSettingsValueAsync(settingsInfo.Name, encryptedString);
+                                        // Encrypt string
+                                        try
+                                        {
+                                            string encryptedString = EncryptionManager.EncryptStringToBase64String(secureString, key);
+                                            await XFormSettingsHelper.SetSecureSettingsValueAsync(settingsInfo.Name, encryptedString);
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            OnEncryptionErrorEvent(new()
+                                            {
+                                                Exception = ex,
+                                                Key = key,
+                                            });
+                                            return XFormSettingsResults.EncryptionError;
+                                        }
                                     }
                                     else
                                         await XFormSettingsHelper.SetSecureSettingsValueAsync(settingsInfo.Name, secureString);
@@ -775,9 +804,21 @@ namespace AndreasReitberger.XForm
                                 {
                                     if (settingsInfo.Encrypt && !string.IsNullOrEmpty(key))
                                     {
-                                        // Decrypt string
-                                        string encryptedString = EncryptionManager.EncryptStringToBase64String(secureString, key);
-                                        await XFormSettingsHelper.SetSecureSettingsValueAsync(settingsInfo.Name, encryptedString);
+                                        // Encrypt string
+                                        try
+                                        {
+                                            string encryptedString = EncryptionManager.EncryptStringToBase64String(secureString, key);
+                                            await XFormSettingsHelper.SetSecureSettingsValueAsync(settingsInfo.Name, encryptedString);
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            OnEncryptionErrorEvent(new()
+                                            {
+                                                Exception = ex,
+                                                Key = key,
+                                            });
+                                            return XFormSettingsResults.EncryptionError;
+                                        }
                                     }
                                     else
                                         await XFormSettingsHelper.SetSecureSettingsValueAsync(settingsInfo.Name, secureString);
@@ -797,7 +838,7 @@ namespace AndreasReitberger.XForm
                 default:
                     break;
             }
-            return true;
+            return XFormSettingsResults.Success;
         }
 
         static async Task<XFormSettingsInfo?> ProcessSettingsInfoAsKeyValuePairAsync(XFormSettingsMemberInfo settingsObjectInfo, XFormSettingsInfo settingsInfo, bool secureOnly = false, string? key = null, bool keeyEncrypted = false)
@@ -841,8 +882,26 @@ namespace AndreasReitberger.XForm
                         if (string.IsNullOrEmpty(key))
                             throw new ArgumentNullException(nameof(key));
                         // Decrypt string
-                        string decryptedString = EncryptionManager.DecryptStringFromBase64String(settingsInfo.Value as string, key);
-                        settingsInfo.Value = decryptedString;
+                        if (settingsInfo.Value is string secureString)
+                        {
+                            try
+                            {
+                                string decryptedString = EncryptionManager.DecryptStringFromBase64String(secureString, key);
+                                // Throw on key missmatch
+                                if (string.IsNullOrEmpty(decryptedString) && !string.IsNullOrEmpty(secureString))
+                                    throw new Exception($"The secure string is not empty, but the decrypted string is. This indicates a key missmatch!");
+                                settingsInfo.Value = decryptedString;
+                            }
+                            catch (Exception ex)
+                            {
+                                OnEncryptionErrorEvent(new()
+                                {
+                                    Exception = ex,
+                                    Key = key,
+                                });
+                                return null;
+                            }
+                        }
                     }
                 }
                 else
@@ -855,6 +914,21 @@ namespace AndreasReitberger.XForm
 
         #endregion
 
+        #endregion
+
+        #region Events
+
+        public static event EventHandler? ErrorEvent;
+        protected static void OnErrorEvent(ErrorEventArgs e)
+        {
+            ErrorEvent?.Invoke(typeof(XFormSettingsGeneric<SO>), e);
+        }
+
+        public static event EventHandler? EncryptionErrorEvent;
+        protected static void OnEncryptionErrorEvent(EncryptionErrorEventArgs e)
+        {
+            EncryptionErrorEvent?.Invoke(typeof(XFormSettingsGeneric<SO>), e);
+        }
         #endregion
     }
 }
