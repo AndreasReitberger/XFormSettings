@@ -736,13 +736,25 @@ namespace AndreasReitberger.XForm
                             {
                                 if (settingsInfo.Value is string secureString)
                                 {
-                                    if (settingsInfo.Encrypt)
+                                    if (settingsInfo.Encrypt && !string.IsNullOrEmpty(secureString))
                                     {
                                         if (string.IsNullOrEmpty(key))
                                             throw new ArgumentNullException(nameof(key));
                                         // Encrypt string
-                                        string encryptedString = EncryptionManager.EncryptStringToBase64String(secureString, key);
-                                        await XFormSettingsHelper.SetSecureSettingsValueAsync(settingsInfo.Name, encryptedString);
+                                        try
+                                        {
+                                            string encryptedString = EncryptionManager.EncryptStringToBase64String(secureString, key);
+                                            await XFormSettingsHelper.SetSecureSettingsValueAsync(settingsInfo.Name, encryptedString);
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            OnEncryptionErrorEvent(new()
+                                            {
+                                                Exception = ex,
+                                                Key = key,
+                                            });
+                                            return XFormSettingsResults.EncryptionError;
+                                        }
                                     }
                                     else
                                         await XFormSettingsHelper.SetSecureSettingsValueAsync(settingsInfo.Name, secureString);
@@ -789,8 +801,10 @@ namespace AndreasReitberger.XForm
                             {
                                 if (settingsInfo.Value is string secureString)
                                 {
-                                    if (settingsInfo.Encrypt && !string.IsNullOrEmpty(key))
+                                    if (settingsInfo.Encrypt && !string.IsNullOrEmpty(secureString))
                                     {
+                                        if (string.IsNullOrEmpty(key))
+                                            throw new ArgumentNullException(nameof(key));
                                         // Encrypt string
                                         try
                                         {
@@ -843,8 +857,10 @@ namespace AndreasReitberger.XForm
                             {
                                 if (settingsInfo.Value is string secureString)
                                 {
-                                    if (settingsInfo.Encrypt && !string.IsNullOrEmpty(key))
+                                    if (settingsInfo.Encrypt && !string.IsNullOrEmpty(secureString))
                                     {
+                                        if (string.IsNullOrEmpty(key))
+                                            throw new ArgumentNullException(nameof(key));                                      
                                         // Encrypt string
                                         try
                                         {
