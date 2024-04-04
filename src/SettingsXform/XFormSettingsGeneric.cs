@@ -94,7 +94,19 @@ namespace AndreasReitberger.XForm
         {
             await GetClassMetaAsync(settings: settings, mode: XFormSettingsActions.Load, key: key);
         });
-        
+
+        public static Task<bool> TryLoadSettingsAsync(string? key = null)
+            => Task.Run(async delegate
+            {
+                return await TryLoadSettingsAsync(settings: SettingsObject, key: key);
+            });
+
+        public static Task<bool> TryLoadSettingsAsync(object settings, string? key = null)
+            => Task.Run(async delegate
+            {
+                return await GetClassMetaAsync(settings: settings, mode: XFormSettingsActions.Load, key: key, justTryLoading: true);
+            });
+
         public static Task LoadSecureSettingsAsync(string? key = null) => Task.Run(async delegate
         {
             await LoadSecureSettingsAsync(settings: SettingsObject, key: key);
@@ -109,19 +121,37 @@ namespace AndreasReitberger.XForm
         {
             await LoadSettingsAsync(settings: SettingsObject, dictionary: dictionary, save: save, key: key);
         });
-        
+
+        public static Task<bool> TryLoadSettingsAsync(Dictionary<string, Tuple<object, Type>> dictionary, string? key = null)
+            => Task.Run(async delegate
+            {
+                return await TryLoadSettingsAsync(settings: SettingsObject, dictionary: dictionary, key: key);
+            });
+
         public static Task LoadSettingsAsync(string settingsKey, Tuple<object, Type> data, bool save = true, string? key = null) => Task.Run(async delegate
         {
             await LoadSettingsAsync(settings: SettingsObject, dictionary: new() { { settingsKey, data} }, save: save, key: key);
         });
-        
+
+        public static Task<bool> TryLoadSettingsAsync(string settingsKey, Tuple<object, Type> data, string? key = null)
+            => Task.Run(async delegate
+            {
+                return await TryLoadSettingsAsync(settings: SettingsObject, dictionary: new() { { settingsKey, data } }, key: key);
+            });
+
         public static Task LoadSettingsAsync(object settings, Dictionary<string, Tuple<object, Type>> dictionary, bool save = true, string? key = null) => Task.Run(async delegate
         {
             await GetMetaFromDictionaryAsync(settings: settings, dictionary: dictionary, mode: XFormSettingsActions.Load, secureOnly: false, key: key);
             // Save the restored settings right away
             if (save) await SaveSettingsAsync(settings: settings, key: key);
         });
-        
+
+        public static Task<bool> TryLoadSettingsAsync(object settings, Dictionary<string, Tuple<object, Type>> dictionary, string? key = null)
+            => Task.Run(async delegate
+            {
+                return await GetMetaFromDictionaryAsync(settings: settings, dictionary: dictionary, mode: XFormSettingsActions.Load, secureOnly: false, key: key, justTryLoading: true);
+            });
+
         #endregion
 
         #region SaveSettings
@@ -305,7 +335,7 @@ namespace AndreasReitberger.XForm
                 }
             }
         }
-        static async Task GetClassMetaAsync(object settings, XFormSettingsActions mode, XFormSettingsTarget target = XFormSettingsTarget.Local, bool secureOnly = false, string? key = null)
+        static async Task<bool> GetClassMetaAsync(object settings, XFormSettingsActions mode, XFormSettingsTarget target = XFormSettingsTarget.Local, bool secureOnly = false, string? key = null, bool justTryLoading = false)
         {
             // Get all member infos from the passed settingsObject
             IEnumerable<MemberInfo> declaredMembers = settings.GetType().GetTypeInfo().DeclaredMembers;
@@ -318,11 +348,12 @@ namespace AndreasReitberger.XForm
                 settingsObjectInfo.OrignalSettingsObject = settings;
                 settingsObjectInfo.Info = mInfo;
                 // Handles saving the settings to the Maui.Storage.Preferences
-                XFormSettingsResults result = await ProcessSettingsInfoAsync(settingsObjectInfo, settingsInfo, mode, target, secureOnly: secureOnly, key: key);
-                if (result == XFormSettingsResults.EncryptionError || result == XFormSettingsResults.Failed) { break; }
-            }        
+                XFormSettingsResults result = await ProcessSettingsInfoAsync(settingsObjectInfo, settingsInfo, mode, target, secureOnly: secureOnly, key: key, justTryLoading: justTryLoading);
+                if (result == XFormSettingsResults.EncryptionError || result == XFormSettingsResults.Failed) { return false; }
+            }
+            return true;
         }
-        static async Task GetMetaFromDictionaryAsync(object settings, Dictionary<string, Tuple<object, Type>> dictionary, XFormSettingsActions mode, XFormSettingsTarget target = XFormSettingsTarget.Local, bool secureOnly = false, string? key = null)
+        static async Task<bool> GetMetaFromDictionaryAsync(object settings, Dictionary<string, Tuple<object, Type>> dictionary, XFormSettingsActions mode, XFormSettingsTarget target = XFormSettingsTarget.Local, bool secureOnly = false, string? key = null, bool justTryLoading = false)
         {
             // Get all member infos from the passed settingsObject
             IEnumerable<MemberInfo> declaredMembers = settings.GetType().GetTypeInfo().DeclaredMembers;
@@ -355,9 +386,10 @@ namespace AndreasReitberger.XForm
                 settingsObjectInfo.Info = mInfo;
                 // Handles saving the settings to the Maui.Storage.Preferences
                 XFormSettingsResults result = await ProcessSettingsInfoAsync(
-                    settingsObjectInfo, settingsInfo, mode, target, secureOnly: secureOnly, useValueFromSettingsInfo: useValueFromSettingsInfo, key: key);
-                if (result == XFormSettingsResults.EncryptionError || result == XFormSettingsResults.Failed) { break; }
-            }          
+                    settingsObjectInfo, settingsInfo, mode, target, secureOnly: secureOnly, useValueFromSettingsInfo: useValueFromSettingsInfo, key: key, justTryLoading: justTryLoading);
+                if (result == XFormSettingsResults.EncryptionError || result == XFormSettingsResults.Failed) { return false; }
+            }
+            return true;
         }
 
         static void GetExpressionMeta<T>(object settings, Expression<Func<SO, T>> value, XFormSettingsActions mode, XFormSettingsTarget target = XFormSettingsTarget.Local)
@@ -404,7 +436,10 @@ namespace AndreasReitberger.XForm
             return new();
         }
 
-        static bool ProcessSettingsInfo(XFormSettingsMemberInfo settingsObjectInfo, XFormSettingsInfo settingsInfo, XFormSettingsActions mode, XFormSettingsTarget target, bool throwOnError = false)
+        static bool ProcessSettingsInfo(
+            XFormSettingsMemberInfo settingsObjectInfo, XFormSettingsInfo settingsInfo, XFormSettingsActions mode, XFormSettingsTarget target, 
+            bool throwOnError = false, bool justTryLoading = false
+            )
         {
             settingsInfo ??= new();
             XFormSettingBaseAttribute? settingBaseAttribute = null;
@@ -477,7 +512,8 @@ namespace AndreasReitberger.XForm
 
                     }
                     // Sets the loaded value back to the settingsObject
-                    XFormSettingsObjectHelper.SetSettingValue(settingsObjectInfo.Info, settingsObjectInfo.OrignalSettingsObject, settingsInfo.Value, settingsInfo.SettingsType);
+                    if (!justTryLoading)
+                        XFormSettingsObjectHelper.SetSettingValue(settingsObjectInfo.Info, settingsObjectInfo.OrignalSettingsObject, settingsInfo.Value, settingsInfo.SettingsType);
                     break;
                 case XFormSettingsActions.Save:
                     // Get the value from the settingsObject
@@ -552,7 +588,10 @@ namespace AndreasReitberger.XForm
             return true;
         }
 
-        static async Task<XFormSettingsResults> ProcessSettingsInfoAsync(XFormSettingsMemberInfo settingsObjectInfo, XFormSettingsInfo settingsInfo, XFormSettingsActions mode, XFormSettingsTarget target, bool secureOnly = false, bool useValueFromSettingsInfo = false, string? key = null, bool keepEncrypted = false)
+        static async Task<XFormSettingsResults> ProcessSettingsInfoAsync(
+            XFormSettingsMemberInfo settingsObjectInfo, XFormSettingsInfo settingsInfo, XFormSettingsActions mode, XFormSettingsTarget target,
+            bool secureOnly = false, bool useValueFromSettingsInfo = false, string? key = null, bool keepEncrypted = false, bool justTryLoading = false
+            )
         {
             settingsInfo ??= new();
             XFormSettingBaseAttribute? settingBaseAttribute = null;
@@ -662,7 +701,8 @@ namespace AndreasReitberger.XForm
                                 // Throw on key missmatch
                                 if (string.IsNullOrEmpty(decryptedString) && !string.IsNullOrEmpty(secureString))
                                     throw new Exception($"The secure string is not empty, but the decrypted string is. This indicates a key missmatch!");
-                                XFormSettingsObjectHelper.SetSettingValue(settingsObjectInfo.Info, settingsObjectInfo.OrignalSettingsObject, decryptedString, settingsInfo.SettingsType);
+                                if (!justTryLoading)
+                                    XFormSettingsObjectHelper.SetSettingValue(settingsObjectInfo.Info, settingsObjectInfo.OrignalSettingsObject, decryptedString, settingsInfo.SettingsType);
                             }
                             catch (Exception ex)
                             {
@@ -677,7 +717,8 @@ namespace AndreasReitberger.XForm
                         }
                     }
                     // Sets the loaded value back to the settingsObject
-                    XFormSettingsObjectHelper.SetSettingValue(settingsObjectInfo.Info, settingsObjectInfo.OrignalSettingsObject, settingsInfo.Value, settingsInfo.SettingsType);
+                    if (!justTryLoading)
+                        XFormSettingsObjectHelper.SetSettingValue(settingsObjectInfo.Info, settingsObjectInfo.OrignalSettingsObject, settingsInfo.Value, settingsInfo.SettingsType);
                     break;
                 case XFormSettingsActions.Save:
                     // Get the value from the settingsObject
