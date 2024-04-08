@@ -281,23 +281,23 @@ namespace AndreasReitberger.XForm
             return setting;
         }
 
-        public static Task<Tuple<string, Tuple<object, Type>>> ToSettingsTupleAsync<T>(Expression<Func<SO, T>> value) 
-            => ToSettingsTupleAsync(settings: SettingsObject, value: value);
+        public static Task<Tuple<string, Tuple<object, Type>>> ToSettingsTupleAsync<T>(Expression<Func<SO, T>> value, string? key = null) 
+            => ToSettingsTupleAsync(settings: SettingsObject, value: value, key: key);
         
 
-        public static async Task<Tuple<string, Tuple<object, Type>>> ToSettingsTupleAsync<T>(object? settings, Expression<Func<SO, T>> value)
+        public static async Task<Tuple<string, Tuple<object, Type>>> ToSettingsTupleAsync<T>(object? settings, Expression<Func<SO, T>> value, string? key = null)
         {
-            XFormSettingsInfo info = await GetExpressionMetaAsKeyValuePairAsync(settings: settings, value: value);
+            XFormSettingsInfo? info = await GetExpressionMetaAsKeyValuePairAsync(settings: settings, value: value, key: key);
             return new(info.Name, new(info.Value, info.SettingsType));
         }
         #endregion
 
         #region Encryption
 
-        public static Task ExhangeKeyAsync(string newKey, string? oldKey = null)
+        public static Task ExhangeKeyAsync(string newKey, string? oldKey = null, bool reloadSettings = false)
             => Task.Run(async delegate
             {
-                await LoadSecureSettingsAsync(key: oldKey);
+                if (reloadSettings) await LoadSecureSettingsAsync(key: oldKey);
                 await SaveSettingsAsync(key: newKey);
             });
 
@@ -431,7 +431,7 @@ namespace AndreasReitberger.XForm
                     OrignalSettingsObject = settings,
                     Info = memberExpression.Member,
 
-                }, new XFormSettingsInfo(), key: key);
+                }, new XFormSettingsInfo(), key: key, keeyEncrypted: true);
             }
             return new();
         }
