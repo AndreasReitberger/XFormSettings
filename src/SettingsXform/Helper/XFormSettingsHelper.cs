@@ -18,7 +18,7 @@ namespace AndreasReitberger.XForm.Helper
          * - String
          * - DateTime
         */
-        public static T GetSettingsValue<T>(string key, T defaultValue)
+        public static T? GetSettingsValue<T>(string key, T defaultValue)
         {
             object? returnValue = null;
             switch (defaultValue)
@@ -62,17 +62,18 @@ namespace AndreasReitberger.XForm.Helper
             return ChangeSettingsType<T>(returnValue, defaultValue);
         }
 
-        public static T ChangeSettingsType<T>(object settingsValue, T defaultValue) => (T)Convert.ChangeType(settingsValue, typeof(T));
+        public static T? ChangeSettingsType<T>(object settingsValue, T defaultValue) => (T)Convert.ChangeType(settingsValue, typeof(T)) ?? defaultValue;
         
         // Docs: https://docs.microsoft.com/en-us/dotnet/maui/platform-integration/storage/secure-storage?tabs=ios
         // Only string is allowed for secure storage
-        public static async Task<string> GetSecureSettingsValueAsync(string key, string defaultValue)
+        public static async Task<string> GetSecureSettingsValueAsync(string key, string? defaultValue)
         {
+            defaultValue ??= string.Empty;
             string settingsObject = await SecureStorage.GetAsync(key);
             return settingsObject == null ? defaultValue : settingsObject;
         }
 
-        public static void SetSettingsValue(string key, object value)
+        public static void SetSettingsValue(string key, object? value)
         {
             switch (value)
             {
