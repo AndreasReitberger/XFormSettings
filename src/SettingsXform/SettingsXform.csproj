@@ -18,7 +18,7 @@
 	<PackageReadmeFile>README.md</PackageReadmeFile>
 	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 	<Title>Settings.XForm</Title>
-	<Version>1.0.1</Version>
+	<Version>1.0.2</Version>
 	<Product>Settings.XForm</Product>
 	<PackageId>SettingsXForm </PackageId>
   </PropertyGroup>
