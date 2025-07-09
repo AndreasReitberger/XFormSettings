@@ -56,9 +56,9 @@ namespace AndreasReitberger.XForm
 
         #region LoadSettings
         public static void LoadSettings() => LoadSettings(settings: SettingsObject);
-        
+
         public static void LoadSetting<T>(Expression<Func<SO, T>> value) => LoadObjectSetting(SettingsObject, value);
-        
+
         public static Task LoadSettingAsync<T>(Expression<Func<SO, T>> value, string? key = null) => Task.Run(async delegate
         {
             await LoadObjectSettingAsync(SettingsObject, value, key: key);
@@ -69,10 +69,10 @@ namespace AndreasReitberger.XForm
         });
 
         public void LoadObjectSettings() => LoadSettings(this);
-        
-        public static void LoadObjectSetting<T>(object settingsObject, Expression<Func<SO, T>> value) 
+
+        public static void LoadObjectSetting<T>(object settingsObject, Expression<Func<SO, T>> value)
             => GetExpressionMeta(settings: settingsObject, value, XFormSettingsActions.Load);
-        
+
         public static Task LoadObjectSettingAsync<T>(object settingsObject, Expression<Func<SO, T>> value, string? key = null) => Task.Run(async delegate
         {
             await GetExpressionMetaAsync(settings: settingsObject, value, XFormSettingsActions.Load, key: key);
@@ -84,12 +84,12 @@ namespace AndreasReitberger.XForm
         });
 
         public static void LoadSettings(object settings) => GetClassMeta(settings: settings, mode: XFormSettingsActions.Load);
-        
+
         public static Task LoadSettingsAsync(string? key = null) => Task.Run(async delegate
         {
             await LoadSettingsAsync(settings: SettingsObject, key: key);
         });
-        
+
         public static Task LoadSettingsAsync(object settings, string? key = null) => Task.Run(async delegate
         {
             await GetClassMetaAsync(settings: settings, mode: XFormSettingsActions.Load, key: key);
@@ -111,12 +111,12 @@ namespace AndreasReitberger.XForm
         {
             await LoadSecureSettingsAsync(settings: SettingsObject, key: key);
         });
-        
+
         public static Task LoadSecureSettingsAsync(object settings, string? key = null) => Task.Run(async delegate
         {
             await GetClassMetaAsync(settings: settings, mode: XFormSettingsActions.Load, secureOnly: true, key: key);
         });
-        
+
         public static Task LoadSettingsAsync(Dictionary<string, Tuple<object, Type>> dictionary, bool save = true, string? key = null) => Task.Run(async delegate
         {
             await LoadSettingsAsync(settings: SettingsObject, dictionary: dictionary, save: save, key: key);
@@ -130,7 +130,7 @@ namespace AndreasReitberger.XForm
 
         public static Task LoadSettingsAsync(string settingsKey, Tuple<object, Type> data, bool save = true, string? key = null) => Task.Run(async delegate
         {
-            await LoadSettingsAsync(settings: SettingsObject, dictionary: new() { { settingsKey, data} }, save: save, key: key);
+            await LoadSettingsAsync(settings: SettingsObject, dictionary: new() { { settingsKey, data } }, save: save, key: key);
         });
 
         public static Task<bool> TryLoadSettingsAsync(string settingsKey, Tuple<object, Type> data, string? key = null)
@@ -156,66 +156,66 @@ namespace AndreasReitberger.XForm
 
         #region SaveSettings
         public static void SaveSettings() => SaveSettings(SettingsObject);
-        
+
         public static void SaveSetting<T>(Expression<Func<SO, T>> value) => SaveObjectSetting(SettingsObject, value);
-        
+
         public static void SaveObjectSetting<T>(object settings, Expression<Func<SO, T>> value) => GetExpressionMeta(settings, value, XFormSettingsActions.Save);
-        
+
         public void SaveObjectSetting<T>(Expression<Func<SO, T>> value) => SaveObjectSetting(this, value);
-        
+
         public void SaveObjectSettings() => SaveSettings(this);
-        
+
         public static void SaveSettings(object settings) => GetClassMeta(settings, XFormSettingsActions.Save);
-        
+
         public static Task SaveSettingsAsync(string? key = null) => Task.Run(async delegate
         {
             await SaveSettingsAsync(settings: SettingsObject, key: key);
         });
-        
+
         public static Task SaveSettingsAsync(object settings, string? key = null) => Task.Run(async delegate
         {
             await GetClassMetaAsync(settings: settings, mode: XFormSettingsActions.Save, key: key);
         });
-        
+
         public static Task SaveSecureSettingsAsync(string? key = null) => Task.Run(async delegate
         {
             await SaveSecureSettingsAsync(settings: SettingsObject, key: key);
         });
-        
+
         public static Task SaveSecureSettingsAsync(object settings, string? key = null) => Task.Run(async delegate
         {
             await GetClassMetaAsync(settings: settings, mode: XFormSettingsActions.Save, secureOnly: true, key: key);
         });
-        
+
         #endregion
 
         #region DeleteSettings
         public static void DeleteSettings() => DeleteSettings(SettingsObject);
-        
+
         public static void DeleteSetting<T>(Expression<Func<SO, T>> value) => DeleteObjectSetting(SettingsObject, value);
-        
+
         public void DeleteObjectSetting<T>(Expression<Func<SO, T>> value) => DeleteObjectSetting(this, value);
-        
+
         public static void DeleteObjectSetting<T>(object settings, Expression<Func<SO, T>> value) => GetExpressionMeta(settings, value, XFormSettingsActions.Delete);
-        
+
         public void DeleteObjectSettings() => DeleteSettings(this);
-        
+
         public static void DeleteSettings(object settings) => GetClassMeta(settings, XFormSettingsActions.Delete);
-        
+
         #endregion
 
         #region LoadDefaults
         public static void LoadDefaultSettings() => LoadDefaultSettings(SettingsObject);
-        
+
         public static void LoadDefaultSetting<T>(Expression<Func<SO, T>> value) => LoadObjectDefaultSetting(SettingsObject, value);
-        
-        public void LoadObjectDefaultSetting<T>(Expression<Func<SO, T>> value) => LoadObjectDefaultSetting(this, value);    
+
+        public void LoadObjectDefaultSetting<T>(Expression<Func<SO, T>> value) => LoadObjectDefaultSetting(this, value);
 
         public static void LoadObjectDefaultSetting<T>(object settings, Expression<Func<SO, T>> value)
             => GetExpressionMeta(settings, value, XFormSettingsActions.LoadDefaults);
-        
+
         public void LoadObjectDefaultSettings() => LoadDefaultSettings(this);
-        
+
         public static void LoadDefaultSettings(object settings) => GetClassMeta(settings, XFormSettingsActions.LoadDefaults);
 
         #endregion
@@ -250,7 +250,7 @@ namespace AndreasReitberger.XForm
                         setting.TryAdd(settingsPair.Name, new Tuple<object, Type>(settingsPair.Value ?? settingsPair.Default, settingsPair.SettingsType));
                     }
                 }
-            return setting;
+                return setting;
             }
         }
 
@@ -281,9 +281,9 @@ namespace AndreasReitberger.XForm
             return setting;
         }
 
-        public static Task<Tuple<string, Tuple<object, Type>>> ToSettingsTupleAsync<T>(Expression<Func<SO, T>> value, string? key = null) 
+        public static Task<Tuple<string, Tuple<object, Type>>> ToSettingsTupleAsync<T>(Expression<Func<SO, T>> value, string? key = null)
             => ToSettingsTupleAsync(settings: SettingsObject, value: value, key: key);
-        
+
 
         public static async Task<Tuple<string, Tuple<object, Type>>> ToSettingsTupleAsync<T>(object? settings, Expression<Func<SO, T>> value, string? key = null)
         {
@@ -365,7 +365,7 @@ namespace AndreasReitberger.XForm
             {
                 bool useValueFromSettingsInfo = false;
                 // Try to find the matching settingsKey
-                KeyValuePair<string, Tuple<object, Type>>? keyPair = dictionary?.FirstOrDefault(keypair => 
+                KeyValuePair<string, Tuple<object, Type>>? keyPair = dictionary?.FirstOrDefault(keypair =>
                     keypair.Key.EndsWith(mInfo.Name
                     //?.Replace("get_", string.Empty)
                     ));
@@ -419,7 +419,7 @@ namespace AndreasReitberger.XForm
                     Info = memberExpression.Member,
 
                 }, new XFormSettingsInfo(), mode, target, secureOnly: secureOnly, key: key);
-            }        
+            }
         }
 
         static async Task<XFormSettingsInfo?> GetExpressionMetaAsKeyValuePairAsync<T>(object settings, Expression<Func<SO, T>> value, string? key = null)
@@ -437,7 +437,7 @@ namespace AndreasReitberger.XForm
         }
 
         static bool ProcessSettingsInfo(
-            XFormSettingsMemberInfo settingsObjectInfo, XFormSettingsInfo settingsInfo, XFormSettingsActions mode, XFormSettingsTarget target, 
+            XFormSettingsMemberInfo settingsObjectInfo, XFormSettingsInfo settingsInfo, XFormSettingsActions mode, XFormSettingsTarget target,
             bool throwOnError = false, bool justTryLoading = false
             )
         {
@@ -624,7 +624,7 @@ namespace AndreasReitberger.XForm
                 if (!secure)
                 {
                     // If only secure storage should be loaded, stop here.
-                    if (secureOnly) 
+                    if (secureOnly)
                         return XFormSettingsResults.Skipped;
                     // If the value is not used from the passed settingsInfo, load it
 
@@ -643,7 +643,7 @@ namespace AndreasReitberger.XForm
                                 settingsInfo.Value = XFormSettingsHelper.ChangeSettingsType(settingsInfo.Value, settingsInfo.Default);
                             break;
                     }
-                    
+
                 }
                 else if (settingsInfo.SettingsType == typeof(string))
                 {
@@ -860,7 +860,7 @@ namespace AndreasReitberger.XForm
                                     if (settingsInfo.Encrypt && !string.IsNullOrEmpty(secureString))
                                     {
                                         if (string.IsNullOrEmpty(key))
-                                            throw new ArgumentNullException(nameof(key));                                      
+                                            throw new ArgumentNullException(nameof(key));
                                         // Encrypt string
                                         try
                                         {
